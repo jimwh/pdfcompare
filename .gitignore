@@ -27,3 +27,6 @@ logs/
 .target/
 .classpath/
 .project/
+
+*.pdf
+*.PDF

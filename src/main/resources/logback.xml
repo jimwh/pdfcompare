@@ -14,7 +14,7 @@
 
     <!-- Daily Rolling File Appender -->
     <appender name="dailyRollingFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>/tmp/lab_act.log</File>
+        <File>/tmp/lab_pdf.log</File>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
             <FileNamePattern>lab_act.%d{yyyy-MM-dd}.log</FileNamePattern>
@@ -25,6 +25,11 @@
         <encoder>
             <Pattern>%d{HH:mm:ss.SSS} [%thread] %-2level %logger{0} - %msg %n</Pattern>
         </encoder>
+
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>TRACE</level>
+        </filter>
+
     </appender>
 
     <logger name="lab.pdf" additivity="false">
@@ -34,13 +39,14 @@
     </logger>
 
     <logger name="org" additivity="false">
-        <level value="ERROR" />
+        <level value="INFO" />
         <appender-ref ref="dailyRollingFileAppender"/>
         <appender-ref ref="consoleAppender" />
     </logger>
 
     <root>
-        <level value="INFO" />
+        <level value="ERROR" />
+        <appender-ref ref="dailyRollingFileAppender"/>
         <appender-ref ref="consoleAppender" />
     </root>
 

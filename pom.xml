@@ -23,10 +23,8 @@
         <start-class>lab.pdf.Application</start-class>
 
         <spring.boot.version>1.3.3.RELEASE</spring.boot.version>
-        <activiti.version>5.19.0.2</activiti.version>
         <logback.version>1.1.3</logback.version>
     </properties>
-
 
     <dependencies>
 
@@ -49,7 +47,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
-            <!-- <version>1.3.3.RELEASE</version> -->
         </dependency>
 
         <dependency>
@@ -64,24 +61,10 @@
             <!-- <scope>test</scope> -->
         </dependency>
 
-        <!--
-        <dependency>
-            <groupId>org.activiti</groupId>
-            <artifactId>activiti-spring-boot-starter-basic</artifactId>
-            <version>${activiti.version}</version>
-        </dependency>
-        -->
-
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>ojdbc7</artifactId>
             <version>12.1.0.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>

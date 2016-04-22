@@ -21,14 +21,17 @@ public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) {
-
-        log.info("start...");
+        if( args.length < 2 ) {
+            log.info("Application <file1> <file2>");
+            System.exit(1);
+        }
+        log.info("start...{}, {}", args[0], args[1]);
 
         ApplicationContext ctx = SpringApplication.run(Application.class, args);
 
         FooBar fooBar=ctx.getBean(FooBar.class);
         log.info("foobar.dir={}", fooBar.getDownloadDir());
-
+        fooBar.testCompare(args[0], args[1]);
         SpringApplication.exit(ctx);
 
         log.info("done...");
