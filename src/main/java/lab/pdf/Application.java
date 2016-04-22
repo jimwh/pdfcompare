@@ -22,7 +22,7 @@ public class Application {
 
     public static void main(String[] args) {
         if( args.length < 2 ) {
-            log.info("Application <file1> <file2>");
+            log.info("lab.pdf.Application <file1> <file2>");
             System.exit(1);
         }
         log.info("start...{}, {}", args[0], args[1]);
