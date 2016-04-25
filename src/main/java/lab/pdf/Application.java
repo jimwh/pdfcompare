@@ -48,10 +48,25 @@ public class Application {
         bool = pdfTextCompare.compareFromInputstream(args[0], args[1]);
         log.info("bool = {}", bool);
 
-
         SpringApplication.exit(ctx);
 
+        test();
         log.info("done...");
     }
 
+    static boolean test() {
+        return size1()==size2() || size3();
+    }
+    static int size1() {
+        log.info("size 1");
+        return 1;
+    }
+    static int size2() {
+        log.info("size 2");
+        return 1;
+    }
+    static boolean size3() {
+        log.info("size 3");
+        return true;
+    }
 }

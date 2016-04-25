@@ -31,33 +31,33 @@ public class PdfTextCompare {
     public boolean compare(final String fileName1, final String fileName2) throws IOException {
         final PdfReader reader1 = new PdfReader(fileName1);
         final PdfReader reader2 = new PdfReader(fileName2);
-        return isSameNumberOfPages(reader1, reader2) ? true : doCompare(reader1, reader2);
+        return isSameNumberOfPages(reader1, reader2) || doCompare(reader1, reader2);
     }
 
     public boolean compare(final ByteArrayInputStream b1, final ByteArrayInputStream b2) throws IOException {
         final PdfReader reader1 = new PdfReader(b1);
         final PdfReader reader2 = new PdfReader(b2);
-        return isSameNumberOfPages(reader1, reader2) ? true : doCompare(reader1, reader2);
+        return isSameNumberOfPages(reader1, reader2) || doCompare(reader1, reader2);
     }
 
     public boolean compare(final InputStream in1, final InputStream in2) throws IOException {
         final PdfReader reader1 = new PdfReader(in1);
         final PdfReader reader2 = new PdfReader(in2);
-        return isSameNumberOfPages(reader1, reader2) ? true : doCompare(reader1, reader2);
+        return isSameNumberOfPages(reader1, reader2) || doCompare(reader1, reader2);
     }
 
     private boolean isSameNumberOfPages(final PdfReader reader1, final PdfReader reader2) {
-        return  reader1.getNumberOfPages() == reader1.getNumberOfPages();
+        return  reader1.getNumberOfPages() == reader2.getNumberOfPages();
     }
 
     private boolean doCompare(final PdfReader reader1, final PdfReader reader2) throws IOException {
         final List<String> list1 = getLineData(reader1);
         final List<String> list2 = getLineData(reader2);
-        // size different, don't bother further
-        if( list1.size() != list2.size() ) {
-            return false;
-        }
+        return list1.size()==list2.size() || doCompare(list1, list2);
+    }
 
+    private boolean doCompare(final List<String> list1, final List<String>list2) {
+        boolean bool = true;
         for(int i = 0; i<list1.size(); i++) {
             final String str1 = list1.get(i);
             if(str1.contains("Printed On:")) {
@@ -66,10 +66,11 @@ public class PdfTextCompare {
             final String str2 = list2.get(i);
             if( !str1.equals(str2) ) {
                 log.info("str1={}, str2={}", str1, str2);
-                return false;
+                bool = false;
+                break;
             }
         }
-        return true;
+        return bool;
     }
 
     private List<String> getLineData(final PdfReader reader) throws IOException {
