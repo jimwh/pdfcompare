@@ -14,8 +14,14 @@ public class TextExtractor {
 
     public void extract(final String fileName) throws IOException {
         final PdfReader reader = new PdfReader(fileName);
-        for(int i = 1; i<=reader.getNumberOfPages(); i++) {
-            log.info("text={}", PdfTextExtractor.getTextFromPage(reader, i));
+        final int numberOfPages = reader.getNumberOfPages();
+        for(int i = 1; i<=numberOfPages; i++) {
+            //log.info("text page {}={}", i, PdfTextExtractor.getTextFromPage(reader, i));
+            log.info("page {}", i);
+            String[] arrayStr = PdfTextExtractor.getTextFromPage(reader, i).split("\n");
+            for(String str: arrayStr) {
+                log.info("str={}", str);
+            }
         }
     }
 }

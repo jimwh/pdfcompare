@@ -3,6 +3,7 @@ package lab.pdf;
 import lab.pdf.conf.DataSourceConfig;
 
 import lab.pdf.service.FooBar;
+import lab.pdf.service.PdfTextCompare;
 import lab.pdf.service.TextExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +37,17 @@ public class Application {
         log.info("foobar.dir={}", fooBar.getDownloadDir());
         fooBar.testCompare(args[0], args[1]);
 
-        //
+        /*
         TextExtractor textExtractor=ctx.getBean(TextExtractor.class);
         textExtractor.extract(args[0]);
+        */
+        PdfTextCompare pdfTextCompare = ctx.getBean(PdfTextCompare.class);
+        boolean bool = pdfTextCompare.compare(args[0], args[1]);
+        log.info("bool = {}", bool);
+
+        bool = pdfTextCompare.compareFromInputstream(args[0], args[1]);
+        log.info("bool = {}", bool);
+
 
         SpringApplication.exit(ctx);
 
