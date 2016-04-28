@@ -40,7 +40,6 @@ public class Application {
         /*
         TextExtractor textExtractor=ctx.getBean(TextExtractor.class);
         textExtractor.extract(args[0]);
-        */
         PdfTextCompare pdfTextCompare = ctx.getBean(PdfTextCompare.class);
         boolean bool = pdfTextCompare.compare(args[0], args[1]);
         log.info("bool = {}", bool);
@@ -51,6 +50,8 @@ public class Application {
         SpringApplication.exit(ctx);
 
         test();
+        */
+
         log.info("done...");
     }
 

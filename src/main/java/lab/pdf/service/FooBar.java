@@ -11,6 +11,7 @@ import com.inet.pdfc.generator.message.InfoData;
 import com.inet.pdfc.generator.model.DiffGroup;
 import com.inet.pdfc.generator.model.IDiffGroupBounds;
 import com.inet.pdfc.generator.model.Modification;
+import com.inet.pdfc.normalizers.NormalizerType;
 import com.inet.pdfc.results.ResultModel;
 import inet.elements.PagedElement;
 import org.slf4j.Logger;
@@ -48,32 +49,46 @@ public class FooBar {
 
 
     void doCompare(final String f1Name, final String f2Name) {
+
         final File f1 = new File(f1Name);
         final File f2 = new File(f2Name);
         final IConfiguration configuration = ConfigurationFactory.getConfiguration();
+        configuration.putObject(PDFCProperty.CREATE_DIFFIMAGES, Boolean.FALSE);
+        configuration.putObject(PDFCProperty.CONTINUOUS_COMPARE, Boolean.FALSE);
+        //
+        configuration.putObject(PDFCProperty.NORMALIZERS, NormalizerType.HEADER_FOOTER);
+        configuration.putObject(PDFCProperty.FIXED_FOOTER_SIZE, 60);
+        configuration.putObject(PDFCProperty.LOG_LEVEL, "ERROR");
+        configuration.putObject(PDFCProperty.COMPARE_TEXT_STYLES, Boolean.FALSE);
+        configuration.putObject( PDFCProperty.CONTINUOUS_COMPARE_TYPES, "" + CompareType.TEXT + "");
+
+
         /*
         configuration.putObject(PDFCProperty.CONTINUOUS_COMPARE, Boolean.TRUE);
         configuration.putObject(PDFCProperty.COMPARE_TEXT_CASE_SENSITIVE, Boolean.TRUE);
-        configuration.putObject(PDFCProperty.COMPARE_TEXT_STYLES, Boolean.FALSE);
+
         configuration.putObject(PDFCProperty.TOLERANCE_TEXT_SIZE, Boolean.FALSE);
         */
-        configuration.putObject(PDFCProperty.FIXED_HEADER_SIZE, Boolean.FALSE);
-        configuration.putObject(PDFCProperty.FIXED_FOOTER_SIZE, Boolean.FALSE);
+        //configuration.putObject(PDFCProperty.FIXED_HEADER_SIZE, Boolean.FALSE);
+        //configuration.putObject(PDFCProperty.FIXED_FOOTER_SIZE, Boolean.FALSE);
         //
-        configuration.putObject(PDFCProperty.CREATE_DIFFIMAGES, Boolean.FALSE);
-        configuration.putObject(PDFCProperty.CONTINUOUS_COMPARE, Boolean.FALSE);
-        //configuration.putObject( PDFCProperty.CONTINUOUS_COMPARE_TYPES, "" + CompareType.TEXT + ", " + CompareType.LINE + ", " + CompareType.IMAGE );
-
-        //configuration.putObject( PDFCProperty.CONTINUOUS_COMPARE_TYPES, ""+CompareType.TEXT+"");
+        // configuration.putObject( PDFCProperty.CONTINUOUS_COMPARE_TYPES, "" + CompareType.TEXT + ", " + CompareType.LINE + ", " + CompareType.IMAGE );
+        // configuration.putObject( PDFCProperty.CONTINUOUS_COMPARE_TYPES, ""+CompareType.TEXT+"");
         // configuration.putObject( PDFCProperty.FILTER_PATTERNS, "Radiation risks");
-        configuration.putObject( PDFCProperty.FILTER_PATTERNS, "Printed On");
-
+        // configuration.putObject( PDFCProperty.FILTER_PATTERNS, "Printed On");
+        //
         final PDFComparer pdfComparer = new PDFComparer();
         pdfComparer.setConfiguration(configuration);
 
         final ResultModel resultModel = pdfComparer.compare(f1, f2);
-        log.info("resultModel={}", !resultModel.isEmpty());
+        log.info("resultModel.isEmpty={}", resultModel.isEmpty());
+        log.info("resultModel.getDifferencesCount(true)={}", resultModel.getDifferencesCount(true));
+        log.info("resultModel.getDifferencesCount(false)={}", resultModel.getDifferencesCount(false));
+        final List<DiffGroup> diffGroupList = resultModel.getDifferences(true);
+        log.info("diffGroupList.isEmpty={}", diffGroupList.isEmpty());
+        log.info("diffGroupList={}", diffGroupList.size());
 
+        /*
         final InfoData infoData = resultModel.getComparisonParameters();
         int firstTotalPageNumber = infoData.getFirstTotalPageNumber();
         int secondTotalPageNumber = infoData.getSecondTotalPageNumber();
@@ -120,6 +135,7 @@ public class FooBar {
 
             }
         }
+        */
     }
 
     /**
