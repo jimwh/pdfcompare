@@ -1,7 +1,9 @@
 package lab.pdf;
 
+import com.itextpdf.text.DocumentException;
 import lab.pdf.conf.DataSourceConfig;
 
+import lab.pdf.service.AddPdfFooter;
 import lab.pdf.service.FooBar;
 import lab.pdf.service.PdfTextCompare;
 import lab.pdf.service.TextExtractor;
@@ -24,7 +26,7 @@ public class Application {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, DocumentException {
         if( args.length < 2 ) {
             log.info("lab.pdf.Application <file1> <file2>");
             System.exit(1);
@@ -32,6 +34,12 @@ public class Application {
         log.info("start...{}, {}", args[0], args[1]);
 
         ApplicationContext ctx = SpringApplication.run(Application.class, args);
+        if( args.length == 3 ) {
+            AddPdfFooter addPdfFooter=ctx.getBean(AddPdfFooter.class);
+            addPdfFooter.addFooter(args[2]);
+            SpringApplication.exit(ctx);
+            return;
+        }
 
         FooBar fooBar=ctx.getBean(FooBar.class);
         log.info("foobar.dir={}", fooBar.getDownloadDir());
