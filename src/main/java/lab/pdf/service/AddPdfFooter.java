@@ -28,12 +28,12 @@ public class AddPdfFooter {
         final int total = reader.getNumberOfPages();
         for(int i = 1; i<=total; i++) {
             log.info("page {}", i);
-            getHeaderTable(i, total).writeSelectedRows(0, -1, 24, 30, pdfStamper.getOverContent(i));
+            getFooterTable(i, total).writeSelectedRows(0, -1, 24, 30, pdfStamper.getOverContent(i));
         }
         pdfStamper.close();
     }
 
-    public static PdfPTable getHeaderTable(final int x, final int y) {
+    public static PdfPTable getFooterTable(final int x, final int y) {
         final PdfPTable table = new PdfPTable(2);
         table.setTotalWidth(527);
         table.setLockedWidth(true);
