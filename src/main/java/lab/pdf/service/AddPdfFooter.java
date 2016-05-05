@@ -6,13 +6,12 @@ import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 /**
  * Created by jh3389 on 5/4/16.
@@ -21,6 +20,10 @@ import java.io.IOException;
 public class AddPdfFooter {
 
     private static final Logger log = LoggerFactory.getLogger(AddPdfFooter.class);
+
+    static final String LINE1="Morningside Institutional Review Board: 212-851-7040";
+    static final String LINE2="Consent Form #: CF-AAAR5354 Copied From: CF-AAAP3709";
+    static final String LINE3="Printed On: 04/26/2016 at 14:19";
 
     public void addFooter(final String fileName) throws IOException, DocumentException {
         final PdfReader reader = new PdfReader(fileName);
@@ -44,4 +47,5 @@ public class AddPdfFooter {
         table.addCell(String.format("Page %d of %d", x, y));
         return table;
     }
+
 }
