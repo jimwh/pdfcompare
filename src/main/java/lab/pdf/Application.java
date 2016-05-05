@@ -1,8 +1,8 @@
 package lab.pdf;
 
 import com.itextpdf.text.DocumentException;
+import java.io.IOException;
 import lab.pdf.conf.DataSourceConfig;
-
 import lab.pdf.service.AddPdfFooter;
 import lab.pdf.service.FooBar;
 import lab.pdf.service.PdfTextCompare;
@@ -15,8 +15,6 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-
-import java.io.IOException;
 
 @Configuration
 @EnableAutoConfiguration
@@ -37,30 +35,25 @@ public class Application {
         if( args.length == 3 ) {
             AddPdfFooter addPdfFooter=ctx.getBean(AddPdfFooter.class);
             addPdfFooter.addFooter(args[2]);
-            SpringApplication.exit(ctx);
-            return;
+        } else {
+            FooBar fooBar = ctx.getBean(FooBar.class);
+            log.info("foobar.dir={}", fooBar.getDownloadDir());
+            fooBar.testCompare(args[0], args[1]);
         }
 
-        FooBar fooBar=ctx.getBean(FooBar.class);
-        log.info("foobar.dir={}", fooBar.getDownloadDir());
-        fooBar.testCompare(args[0], args[1]);
-
-        /*
-        TextExtractor textExtractor=ctx.getBean(TextExtractor.class);
-        textExtractor.extract(args[0]);
-        PdfTextCompare pdfTextCompare = ctx.getBean(PdfTextCompare.class);
-        boolean bool = pdfTextCompare.compare(args[0], args[1]);
-        log.info("bool = {}", bool);
-
-        bool = pdfTextCompare.compareFromInputstream(args[0], args[1]);
-        log.info("bool = {}", bool);
-
         SpringApplication.exit(ctx);
-
-        test();
-        */
-
         log.info("done...");
+    }
+
+    static void textComparison(ApplicationContext ctx, String f1, String f2) throws IOException {
+        TextExtractor textExtractor=ctx.getBean(TextExtractor.class);
+        textExtractor.extract(f1);
+        //
+        PdfTextCompare pdfTextCompare = ctx.getBean(PdfTextCompare.class);
+        boolean bool = pdfTextCompare.compare(f1, f2);
+        log.info("bool = {}", bool);
+        bool = pdfTextCompare.compareFromInputstream(f1, f2);
+        log.info("bool = {}", bool);
     }
 
     static boolean test() {
