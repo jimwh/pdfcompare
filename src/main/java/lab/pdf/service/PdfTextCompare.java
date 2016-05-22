@@ -14,9 +14,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by jh3389 on 4/25/16.
- */
 @Component
 public class PdfTextCompare {
     private static final Logger log = LoggerFactory.getLogger(PdfTextCompare.class);
