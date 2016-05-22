@@ -3,8 +3,7 @@ package lab.pdf;
 import com.itextpdf.text.DocumentException;
 import java.io.IOException;
 import lab.pdf.conf.DataSourceConfig;
-import lab.pdf.service.AddPdfFooter;
-import lab.pdf.service.FooBar;
+import lab.pdf.service.ConsentComapre;
 import lab.pdf.service.PdfTextCompare;
 import lab.pdf.service.TextExtractor;
 import org.slf4j.Logger;
@@ -32,6 +31,10 @@ public class Application {
         log.info("start...{}, {}", args[0], args[1]);
 
         ApplicationContext ctx = SpringApplication.run(Application.class, args);
+        ConsentComapre fooBar = ctx.getBean(ConsentComapre.class);
+        fooBar.testCompare(args[0], args[1]);
+
+        /*
         if( args.length == 3 ) {
             AddPdfFooter addPdfFooter=ctx.getBean(AddPdfFooter.class);
             addPdfFooter.addFooter(args[2]);
@@ -40,6 +43,7 @@ public class Application {
             log.info("foobar.dir={}", fooBar.getDownloadDir());
             fooBar.testCompare(args[0], args[1]);
         }
+        */
 
         SpringApplication.exit(ctx);
         log.info("done...");
