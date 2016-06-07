@@ -26,11 +26,6 @@ import java.util.Date;
 @Component
 public class PdfStampService {
 
-    private static final String PROTOCOL_NUMBER_TEXT = "IRB-";
-    private static final String APPROVAL_DATE_TEXT = "IRB Approval Date: ";
-    private static final String EXPIRED_DATE_TEXT = "     for use until: ";
-    private static final String EXEMPTION_DATE_TEXT = "IRB Exemption Date: ";
-
     @Resource
     private CustomerResourceLoader resourceLoader;
     private static final Logger log = LoggerFactory.getLogger(PdfStampService.class);
@@ -46,13 +41,13 @@ public class PdfStampService {
         final BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
         final int totalPages = pdfReader.getNumberOfPages();
         for (int i = 1; i <= totalPages; i++) {
-            Rectangle pageSize = pdfReader.getCropBox(i);
+            final Rectangle pageSize = pdfReader.getCropBox(i);
             // Ensure all the images will have a height of one inch.
             image.scaleToFit(1000f, 35.5f);
 
             //Stamp should be always on the right-bottom corner regardless of the original rotation.
-            int rotation = pdfReader.getPageRotation(i);
-            boolean isPortraitMode = rotation == 0 || rotation == 180;
+            final int rotation = pdfReader.getPageRotation(i);
+            final boolean isPortraitMode = rotation == 0 || rotation == 180;
             if (isPortraitMode) {
                 image.setAbsolutePosition(pageSize.getRight(10f) - image.getScaledWidth(), pageSize.getBottom(20f));
             } else {
@@ -74,7 +69,7 @@ public class PdfStampService {
                     isPortraitMode);
             approvalDateStamp.stampText();
 
-            DateTime until = DateTime.now().plusYears(1);
+            final DateTime until = DateTime.now().plusYears(1);
             final ExpiredDateStamp expiredDateStamp = new ExpiredDateStamp(content,
                     pageSize,
                     baseFont,
@@ -123,11 +118,11 @@ public class PdfStampService {
     }
 
     private class ExpiredDateStamp extends TextStamp {
-        public ExpiredDateStamp(PdfContentByte content,
-                                Rectangle cropBox,
-                                BaseFont baseFont,
-                                Date date,
-                                boolean isPortraitMode) {
+        public ExpiredDateStamp(final PdfContentByte content,
+                                final Rectangle cropBox,
+                                final BaseFont baseFont,
+                                final Date date,
+                                final boolean isPortraitMode) {
             super(content,
                     cropBox,
                     baseFont,
@@ -142,32 +137,32 @@ public class PdfStampService {
     }
 
 
-    private abstract class TextStamp {
-        protected final float textRotation = 0f;
+    private class TextStamp {
+        private static final float textRotation = 0f;
 
-        protected final PdfContentByte content;
-        protected final Rectangle cropBox;
-        protected final boolean isPortraitMode;
-        protected final String textToPrint;
+        private final PdfContentByte content;
+        private final Rectangle cropBox;
+        private final boolean isPortraitMode;
+        private final String textToPrint;
 
-        protected final BaseFont baseFont;
-        protected final float fontSize;
+        private final BaseFont baseFont;
+        private final float fontSize;
 
-        protected final float rightMargin;
-        protected final float bottomMargin;
-        protected final float topMargin;
-        protected final float leftMargin;
+        private final float rightMargin;
+        private final float bottomMargin;
+        private final float topMargin;
+        private final float leftMargin;
 
-        protected TextStamp(PdfContentByte content,
-                            Rectangle cropBox,
-                            BaseFont baseFont,
-                            boolean isPortraitMode,
-                            String textToPrint,
-                            float fontSize,
-                            float rightMargin,
-                            float bottomMargin,
-                            float topMargin,
-                            float leftMargin) {
+        protected TextStamp(final PdfContentByte content,
+                            final Rectangle cropBox,
+                            final BaseFont baseFont,
+                            final boolean isPortraitMode,
+                            final String textToPrint,
+                            final float fontSize,
+                            final float rightMargin,
+                            final float bottomMargin,
+                            final float topMargin,
+                            final float leftMargin) {
             this.content = content;
             this.cropBox = cropBox;
             this.baseFont = baseFont;
