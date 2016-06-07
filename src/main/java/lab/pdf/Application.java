@@ -1,13 +1,19 @@
 package lab.pdf;
 
 import com.itextpdf.text.DocumentException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import lab.pdf.conf.DataSourceConfig;
 import lab.pdf.service.CustomerResourceLoader;
 import lab.pdf.service.PdfBodyCompare;
 import lab.pdf.service.PdfInfo;
+import lab.pdf.service.PdfStampService;
 import lab.pdf.service.PdfTextCompare;
 import lab.pdf.service.TextExtractor;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -50,6 +56,8 @@ public class Application {
 
         bodyCompare(ctx, args);
 
+        testPdfStamp(ctx, args[0]);
+
         SpringApplication.exit(ctx);
         log.info("done...");
     }
@@ -80,6 +88,17 @@ public class Application {
         final PdfBodyCompare bodyComapre=ctx.getBean(PdfBodyCompare.class);
         final boolean bool = bodyComapre.compareContent(args[1], args[2]);
         log.info("Is the same body: {}", bool);
+    }
+
+
+    static void testPdfStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("fileName={}", fileName);
+        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
+        ByteArrayOutputStream outputStream = stampService.stamp(fileName);
+        FileOutputStream fileOutputStream=new FileOutputStream(new File("/tmp/stamped.pdf"));
+        // outputStream.writeTo(fileOutputStream);
+        fileOutputStream.write(outputStream.toByteArray());
+        fileOutputStream.close();
     }
 
     /*
