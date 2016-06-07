@@ -27,7 +27,7 @@ import java.util.Date;
 public class PdfStampService {
 
     @Resource
-    private CustomerResourceLoader resourceLoader;
+    private transient CustomerResourceLoader resourceLoader;
     private static final Logger log = LoggerFactory.getLogger(PdfStampService.class);
 
     public ByteArrayOutputStream stamp(final String fileName) throws IOException, DocumentException {
@@ -41,7 +41,7 @@ public class PdfStampService {
         final BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
         final int totalPages = pdfReader.getNumberOfPages();
         for (int i = 1; i <= totalPages; i++) {
-            final Rectangle pageSize = pdfReader.getCropBox(i);
+            final Rectangle rectangle = pdfReader.getCropBox(i);
             // Ensure all the images will have a height of one inch.
             image.scaleToFit(1000f, 35.5f);
 
@@ -49,9 +49,9 @@ public class PdfStampService {
             final int rotation = pdfReader.getPageRotation(i);
             final boolean isPortraitMode = rotation == 0 || rotation == 180;
             if (isPortraitMode) {
-                image.setAbsolutePosition(pageSize.getRight(10f) - image.getScaledWidth(), pageSize.getBottom(20f));
+                image.setAbsolutePosition(rectangle.getRight(10f) - image.getScaledWidth(), rectangle.getBottom(20f));
             } else {
-                image.setAbsolutePosition(pageSize.getTop(20f) - image.getScaledWidth(), pageSize.getLeft(5f));
+                image.setAbsolutePosition(rectangle.getTop(20f) - image.getScaledWidth(), rectangle.getLeft(5f));
             }
 
             //put content over (not under)
@@ -63,7 +63,7 @@ public class PdfStampService {
             content.addImage(image);
 
             final ApprovalDateStamp approvalDateStamp = new ApprovalDateStamp(content,
-                    pageSize,
+                    rectangle,
                     baseFont,
                     new Date(),
                     isPortraitMode);
@@ -71,7 +71,7 @@ public class PdfStampService {
 
             final DateTime until = DateTime.now().plusYears(1);
             final ExpiredDateStamp expiredDateStamp = new ExpiredDateStamp(content,
-                    pageSize,
+                    rectangle,
                     baseFont,
                     until.toDate(),
                     isPortraitMode);
