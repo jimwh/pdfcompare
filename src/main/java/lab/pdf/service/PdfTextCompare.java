@@ -47,7 +47,7 @@ public class PdfTextCompare {
     }
 
     private boolean doCompare(final PdfReader reader1, final PdfReader reader2) throws IOException {
-        log.info("doCompare...");
+        log.info("compareContent...");
         final List<String> list1 = getLineData(reader1);
         final List<String> list2 = getLineData(reader2);
         return list1.size()==list2.size() && doCompare(list1, list2);

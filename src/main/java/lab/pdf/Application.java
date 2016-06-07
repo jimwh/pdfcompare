@@ -3,7 +3,9 @@ package lab.pdf;
 import com.itextpdf.text.DocumentException;
 import java.io.IOException;
 import lab.pdf.conf.DataSourceConfig;
-import lab.pdf.service.ConsentComapre;
+import lab.pdf.service.CustomerResourceLoader;
+import lab.pdf.service.PdfBodyCompare;
+import lab.pdf.service.PdfInfo;
 import lab.pdf.service.PdfTextCompare;
 import lab.pdf.service.TextExtractor;
 import org.slf4j.Logger;
@@ -23,16 +25,18 @@ public class Application {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    public static void main(String[] args) throws IOException, DocumentException {
+    public static void main(final String[] args) throws IOException, DocumentException {
         if( args.length < 2 ) {
             log.info("lab.pdf.Application <file1> <file2>");
-            System.exit(1);
+            return;
         }
         log.info("start...{}, {}", args[0], args[1]);
 
-        ApplicationContext ctx = SpringApplication.run(Application.class, args);
-        ConsentComapre fooBar = ctx.getBean(ConsentComapre.class);
-        fooBar.testCompare(args[0], args[1]);
+        final ApplicationContext ctx = SpringApplication.run(Application.class, args);
+
+        pdfInfo(ctx, args[0]);
+
+        testResourceLoader(ctx);
 
         /*
         if( args.length == 3 ) {
@@ -41,25 +45,44 @@ public class Application {
         } else {
             FooBar fooBar = ctx.getBean(FooBar.class);
             log.info("foobar.dir={}", fooBar.getDownloadDir());
-            fooBar.testCompare(args[0], args[1]);
         }
         */
+
+        bodyCompare(ctx, args);
 
         SpringApplication.exit(ctx);
         log.info("done...");
     }
 
-    static void textComparison(ApplicationContext ctx, String f1, String f2) throws IOException {
-        TextExtractor textExtractor=ctx.getBean(TextExtractor.class);
+    static void pdfInfo(final ApplicationContext ctx, final String fileName) throws IOException {
+        final PdfInfo pdfInfo = ctx.getBean(PdfInfo.class);
+        pdfInfo.printPdfInfo(fileName);
+        log.info("isLegacy={}", pdfInfo.isLegacy(fileName));
+    }
+
+    static void textComparison(final ApplicationContext ctx, final String f1, final String f2) throws IOException {
+        final TextExtractor textExtractor=ctx.getBean(TextExtractor.class);
         textExtractor.extract(f1);
         //
-        PdfTextCompare pdfTextCompare = ctx.getBean(PdfTextCompare.class);
+        final PdfTextCompare pdfTextCompare = ctx.getBean(PdfTextCompare.class);
         boolean bool = pdfTextCompare.compare(f1, f2);
         log.info("bool = {}", bool);
         bool = pdfTextCompare.compareFromInputstream(f1, f2);
         log.info("bool = {}", bool);
     }
 
+    static void testResourceLoader(final ApplicationContext ctx) throws IOException {
+        final CustomerResourceLoader resourceLoader=ctx.getBean(CustomerResourceLoader.class);
+        resourceLoader.foobar();
+    }
+
+    static void bodyCompare(final ApplicationContext ctx, String[] args) throws IOException {
+        final PdfBodyCompare bodyComapre=ctx.getBean(PdfBodyCompare.class);
+        final boolean bool = bodyComapre.compareContent(args[1], args[2]);
+        log.info("Is the same body: {}", bool);
+    }
+
+    /*
     static boolean test() {
         return size1()==size2() || size3();
     }
@@ -75,4 +98,5 @@ public class Application {
         log.info("size 3");
         return true;
     }
+    */
 }
