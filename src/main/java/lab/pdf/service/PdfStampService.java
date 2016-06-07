@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,8 +27,8 @@ import java.util.Date;
 public class PdfStampService {
 
     private static final String PROTOCOL_NUMBER_TEXT = "IRB-";
-    private static final String APPROVAL_DATE_TEXT 	= "IRB Approval Date: ";
-    private static final String EXPIRED_DATE_TEXT 	= "     for use until: ";
+    private static final String APPROVAL_DATE_TEXT = "IRB Approval Date: ";
+    private static final String EXPIRED_DATE_TEXT = "     for use until: ";
     private static final String EXEMPTION_DATE_TEXT = "IRB Exemption Date: ";
 
     @Resource
@@ -37,27 +36,27 @@ public class PdfStampService {
     private static final Logger log = LoggerFactory.getLogger(PdfStampService.class);
 
     public ByteArrayOutputStream stamp(final String fileName) throws IOException, DocumentException {
-        final ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final InputStream inputStream = getInputStream(fileName);
         final PdfReader pdfReader = new PdfReader(inputStream);
         final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
 
-        final Image image =  Image.getInstance( getResource("approvalConsent.png") );
-        log.info("image={}", image!=null);
+        final Image image = Image.getInstance(getResource("approvalConsent.png"));
+        log.info("image={}", image != null);
         final BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
         final int totalPages = pdfReader.getNumberOfPages();
-        for(int i=1; i<=totalPages; i++) {
+        for (int i = 1; i <= totalPages; i++) {
             Rectangle pageSize = pdfReader.getCropBox(i);
             // Ensure all the images will have a height of one inch.
             image.scaleToFit(1000f, 35.5f);
 
             //Stamp should be always on the right-bottom corner regardless of the original rotation.
             int rotation = pdfReader.getPageRotation(i);
-            boolean isPortraitMode = rotation == 0 || rotation ==180;
+            boolean isPortraitMode = rotation == 0 || rotation == 180;
             if (isPortraitMode) {
-                image.setAbsolutePosition(pageSize.getRight(10f)-image.getScaledWidth(), pageSize.getBottom(20f));
+                image.setAbsolutePosition(pageSize.getRight(10f) - image.getScaledWidth(), pageSize.getBottom(20f));
             } else {
-                image.setAbsolutePosition(pageSize.getTop(20f)-image.getScaledWidth(), pageSize.getLeft(5f));
+                image.setAbsolutePosition(pageSize.getTop(20f) - image.getScaledWidth(), pageSize.getLeft(5f));
             }
 
             //put content over (not under)
@@ -68,13 +67,20 @@ public class PdfStampService {
             content.saveState();
             content.addImage(image);
 
-            final ApprovalDateStamp dateStamp = new ApprovalDateStamp(content,
+            final ApprovalDateStamp approvalDateStamp = new ApprovalDateStamp(content,
                     pageSize,
                     baseFont,
                     new Date(),
                     isPortraitMode);
+            approvalDateStamp.stampText();
 
-            dateStamp.stampText();
+            DateTime until = DateTime.now().plusYears(1);
+            final ExpiredDateStamp expiredDateStamp = new ExpiredDateStamp(content,
+                    pageSize,
+                    baseFont,
+                    until.toDate(),
+                    isPortraitMode);
+            expiredDateStamp.stampText();
             content.restoreState();
         }
         pdfStamper.close();
@@ -90,7 +96,7 @@ public class PdfStampService {
     }
 
     private byte[] getResource(final String name) throws IOException {
-        final InputStream inputStream=resourceLoader.getInputStream(name);
+        final InputStream inputStream = resourceLoader.getInputStream(name);
         final byte[] bytes = IOUtils.toByteArray(inputStream);
         inputStream.close();
         return bytes;
@@ -102,20 +108,40 @@ public class PdfStampService {
                                  final BaseFont baseFont,
                                  final Date date,
                                  final boolean isPortrait) {
+
             super(contentByte,
                     cropBox,
                     baseFont,
                     isPortrait,
-                    // APPROVAL_DATE_TEXT + new DateTime(date).toString("MM/dd/yyyy"),
                     new DateTime(date).toString("MM/dd/yyyy"),
-                    6f,
-                    161f,
-                    30f,
-                    174f,
-                    16f);
+                    6f + 2f,     // fontSize
+                    161f - 55f,  // rightMargin
+                    30f + 5f,    // bottomMargin
+                    174f - 5f,   // topMargin
+                    16f + 55f);  // leftMargin
         }
-
     }
+
+    private class ExpiredDateStamp extends TextStamp {
+        public ExpiredDateStamp(PdfContentByte content,
+                                Rectangle cropBox,
+                                BaseFont baseFont,
+                                Date date,
+                                boolean isPortraitMode) {
+            super(content,
+                    cropBox,
+                    baseFont,
+                    isPortraitMode,
+                    new DateTime(date).toString("MM/dd/yyyy"),
+                    6f + 2f, // fontSize
+                    151f - 45f, // rightMargin
+                    23  + 2f,   // bottomMargin
+                    164 - 2f,  // topMargin
+                    10f + 45f); // leftMargin
+        }
+    }
+
+
     private abstract class TextStamp {
         protected final float textRotation = 0f;
 
@@ -132,16 +158,16 @@ public class PdfStampService {
         protected final float topMargin;
         protected final float leftMargin;
 
-        protected TextStamp (PdfContentByte content,
-                             Rectangle cropBox,
-                             BaseFont baseFont,
-                             boolean isPortraitMode,
-                             String textToPrint,
-                             float fontSize,
-                             float rightMargin,
-                             float bottomMargin,
-                             float topMargin,
-                             float leftMargin) {
+        protected TextStamp(PdfContentByte content,
+                            Rectangle cropBox,
+                            BaseFont baseFont,
+                            boolean isPortraitMode,
+                            String textToPrint,
+                            float fontSize,
+                            float rightMargin,
+                            float bottomMargin,
+                            float topMargin,
+                            float leftMargin) {
             this.content = content;
             this.cropBox = cropBox;
             this.baseFont = baseFont;
@@ -161,7 +187,7 @@ public class PdfStampService {
 
             float x = this.cropBox.getRight(rightMargin);
             float y = this.cropBox.getBottom(bottomMargin);
-            if(!this.isPortraitMode) {
+            if (!this.isPortraitMode) {
                 x = this.cropBox.getTop(topMargin);
                 y = this.cropBox.getLeft(leftMargin);
             }
