@@ -56,9 +56,9 @@ public class PdfStampService {
 
             //put content over (not under)
             final PdfContentByte content = pdfStamper.getOverContent(i);
-            final PdfGState gs1 = new PdfGState();
-            gs1.setFillOpacity(0.5f);
-            content.setGState(gs1);
+            final PdfGState pdfGState = new PdfGState();
+            pdfGState.setFillOpacity(0.5f);
+            content.setGState(pdfGState);
             content.saveState();
             content.addImage(image);
 
