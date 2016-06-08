@@ -75,7 +75,7 @@ public class PdfStampService {
             approvalDateStamp.stampText();
 
 
-            final ExpiredDateStamp expiredDateStamp = new ExpiredDateStamp(content,
+            final ExpiryDateStamp expiredDateStamp = new ExpiryDateStamp(content,
                     rectangle,
                     baseFont,
                     expiryDate,
@@ -125,12 +125,12 @@ public class PdfStampService {
         }
     }
 
-    private class ExpiredDateStamp extends TextStamp {
-        public ExpiredDateStamp(final PdfContentByte content,
-                                final Rectangle cropBox,
-                                final BaseFont baseFont,
-                                final Date date,
-                                final boolean isPortraitMode) {
+    private class ExpiryDateStamp extends TextStamp {
+        public ExpiryDateStamp(final PdfContentByte content,
+                               final Rectangle cropBox,
+                               final BaseFont baseFont,
+                               final Date date,
+                               final boolean isPortraitMode) {
             super(content,
                     cropBox,
                     baseFont,
