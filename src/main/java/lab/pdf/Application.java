@@ -60,8 +60,8 @@ public class Application {
 
         // bodyCompare(ctx, args);
 
-        testPdfStamp(ctx, args[0]);
-
+        // testPdfStamp(ctx, args[0]);
+        testPdfStamp(ctx, "/tmp/foo.pdf");
         SpringApplication.exit(ctx);
         log.info("done...");
     }
