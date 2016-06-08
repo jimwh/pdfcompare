@@ -2,13 +2,21 @@ package lab.pdf.service;
 
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -18,9 +26,7 @@ public class AddPdfFooter {
 
     private static final Logger log = LoggerFactory.getLogger(AddPdfFooter.class);
 
-    static final String LINE1="Morningside Institutional Review Board: 212-851-7040";
-    static final String LINE2="Consent Form #: CF-AAAR5354 Copied From: CF-AAAP3709";
-    static final String LINE3="Printed On: 04/26/2016 at 14:19";
+    static final String LINE1="Medical Center Institutional Review Board: 212-851-7040";
 
     public void addFooter(final String fileName) throws IOException, DocumentException {
         final PdfReader reader = new PdfReader(fileName);
@@ -45,4 +51,34 @@ public class AddPdfFooter {
         return table;
     }
 
+    public PdfPTable getApprovalFooterTable(final String consentNumber, final String copiedFromNumber,
+                                            final int x, final int y) {
+
+        final PdfPTable table = new PdfPTable(1);
+        table.setTotalWidth(350);
+        table.setLockedWidth(true);
+        final String space=String.format("%-60s", ' ');
+        final String page = String.format("%sPage %d of %d", space, x, y);
+        final String line2 = getLine2(consentNumber, copiedFromNumber);
+        final String line3 = printedOn();
+        final String paragraphString=String.format("%s%n%s%n%s%s", LINE1, line2, line3, page);
+        final Font font = FontFactory.getFont(Font.FontFamily.HELVETICA.name(), 9);
+        final Paragraph paragraph=new Paragraph(paragraphString, font);
+        final PdfPCell cell =  new PdfPCell(paragraph);
+        cell.setBorder(Rectangle.NO_BORDER);
+        table.addCell(cell);
+
+        return table;
+    }
+
+    private String printedOn() {
+        final DateTime now = DateTime.now();
+        return String.format("Printed on: %s at %s", now.toString("MM/dd/yyyy"), now.toString("HH:mm"));
+    }
+
+    private String getLine2(final String consentNum, final String fromNum) {
+        return StringUtils.isBlank(fromNum) ?
+                String.format("Consent Form #: %s", consentNum) :
+                String.format("Consent Form #: %s  Copied From #: %s", consentNum, fromNum);
+    }
 }

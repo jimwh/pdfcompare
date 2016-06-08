@@ -4,8 +4,12 @@ import com.itextpdf.text.DocumentException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Date;
+
 import lab.pdf.conf.DataSourceConfig;
 import lab.pdf.service.CustomerResourceLoader;
 import lab.pdf.service.PdfBodyCompare;
@@ -13,7 +17,7 @@ import lab.pdf.service.PdfInfo;
 import lab.pdf.service.PdfStampService;
 import lab.pdf.service.PdfTextCompare;
 import lab.pdf.service.TextExtractor;
-import org.apache.commons.io.IOUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -40,9 +44,9 @@ public class Application {
 
         final ApplicationContext ctx = SpringApplication.run(Application.class, args);
 
-        pdfInfo(ctx, args[0]);
+        // pdfInfo(ctx, args[0]);
 
-        testResourceLoader(ctx);
+        // testResourceLoader(ctx);
 
         /*
         if( args.length == 3 ) {
@@ -54,7 +58,7 @@ public class Application {
         }
         */
 
-        bodyCompare(ctx, args);
+        // bodyCompare(ctx, args);
 
         testPdfStamp(ctx, args[0]);
 
@@ -93,12 +97,23 @@ public class Application {
 
     static void testPdfStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
         log.info("fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+        final Date approvalDate = DateTime.now().toDate();
+        final Date expiryDate = DateTime.now().plusYears(1).toDate();
+        final InputStream inputStream = new FileInputStream(fileName);
+
         final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        ByteArrayOutputStream outputStream = stampService.stamp(fileName);
+        ByteArrayOutputStream outputStream = stampService.approvalStamper(
+                consentNumber, fromNumber,
+                approvalDate, expiryDate,
+                inputStream);
+
         FileOutputStream fileOutputStream=new FileOutputStream(new File("/tmp/stamped.pdf"));
-        // outputStream.writeTo(fileOutputStream);
-        fileOutputStream.write(outputStream.toByteArray());
+        outputStream.writeTo(fileOutputStream);
+        //fileOutputStream.write(outputStream.toByteArray());
         fileOutputStream.close();
+        inputStream.close();
     }
 
     /*

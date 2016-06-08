@@ -6,6 +6,7 @@ import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfGState;
+import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import org.apache.commons.io.IOUtils;
@@ -16,9 +17,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
@@ -28,11 +26,18 @@ public class PdfStampService {
 
     @Resource
     private transient CustomerResourceLoader resourceLoader;
+    @Resource
+    private transient AddPdfFooter addPdfFooter;
+
     private static final Logger log = LoggerFactory.getLogger(PdfStampService.class);
 
-    public ByteArrayOutputStream stamp(final String fileName) throws IOException, DocumentException {
+    public ByteArrayOutputStream approvalStamper(final String consentNumber,
+                                                 final String fromNumber,
+                                                 final Date approvalDate,
+                                                 final Date expiryDate,
+                                                 final InputStream inputStream) throws IOException, DocumentException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        final InputStream inputStream = getInputStream(fileName);
+
         final PdfReader pdfReader = new PdfReader(inputStream);
         final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
 
@@ -65,29 +70,32 @@ public class PdfStampService {
             final ApprovalDateStamp approvalDateStamp = new ApprovalDateStamp(content,
                     rectangle,
                     baseFont,
-                    new Date(),
+                    approvalDate,
                     isPortraitMode);
             approvalDateStamp.stampText();
 
-            final DateTime until = DateTime.now().plusYears(1);
+
             final ExpiredDateStamp expiredDateStamp = new ExpiredDateStamp(content,
                     rectangle,
                     baseFont,
-                    until.toDate(),
+                    expiryDate,
                     isPortraitMode);
             expiredDateStamp.stampText();
             content.restoreState();
+
+            addApprovalFooter(consentNumber, fromNumber, i, totalPages, content);
         }
         pdfStamper.close();
         pdfReader.close();
-        inputStream.close();
         return byteArrayOutputStream;
     }
 
 
-    private InputStream getInputStream(final String fileName) throws FileNotFoundException {
-        log.info("fileName={}", fileName);
-        return new FileInputStream(new File(fileName));
+    private void addApprovalFooter(final String consentNumber,
+                                   final String fromNumber,
+                                   final int x, final int y, final PdfContentByte contentByte) {
+        final PdfPTable pdfTable = addPdfFooter.getApprovalFooterTable(consentNumber, fromNumber, x, y);
+        pdfTable.writeSelectedRows(0, -1, 24, 50, contentByte);
     }
 
     private byte[] getResource(final String name) throws IOException {
@@ -135,7 +143,6 @@ public class PdfStampService {
                     10f + 45f); // leftMargin
         }
     }
-
 
     private class TextStamp {
         private static final float textRotation = 0f;
