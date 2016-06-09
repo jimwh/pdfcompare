@@ -17,6 +17,7 @@ import lab.pdf.service.PdfInfo;
 import lab.pdf.service.PdfStampService;
 import lab.pdf.service.PdfTextCompare;
 import lab.pdf.service.TextExtractor;
+import lab.pdf.service.WatermarkService;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,8 @@ public class Application {
         // bodyCompare(ctx, args);
 
         // testPdfStamp(ctx, args[0]);
-        testPdfStamp(ctx, "/tmp/foo.pdf");
+        // testPdfStamp(ctx, "/tmp/foo.pdf");
+        testPdfStamp(ctx, "./LegacyConsentForm.pdf");
         SpringApplication.exit(ctx);
         log.info("done...");
     }
@@ -96,7 +98,7 @@ public class Application {
 
 
     static void testPdfStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
-        log.info("fileName={}", fileName);
+        log.info("input fileName={}", fileName);
         final String consentNumber="CF-ABCD5678";
         final String fromNumber="CF-ABCD1234";
         final Date approvalDate = DateTime.now().toDate();
@@ -104,33 +106,19 @@ public class Application {
         final InputStream inputStream = new FileInputStream(fileName);
 
         final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        ByteArrayOutputStream outputStream = stampService.approvalStamper(
+        final ByteArrayOutputStream outputStream = stampService.approvalStamper(
                 consentNumber, fromNumber,
                 approvalDate, expiryDate,
                 inputStream);
+        //
+        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
+        ByteArrayOutputStream wout = watermarkService.waterMark("Expired", outputStream);
 
+        log.info("output fileName=/tmp/stamped.pdf");
         FileOutputStream fileOutputStream=new FileOutputStream(new File("/tmp/stamped.pdf"));
-        outputStream.writeTo(fileOutputStream);
-        //fileOutputStream.write(outputStream.toByteArray());
+        wout.writeTo(fileOutputStream);
         fileOutputStream.close();
         inputStream.close();
     }
 
-    /*
-    static boolean test() {
-        return size1()==size2() || size3();
-    }
-    static int size1() {
-        log.info("size 1");
-        return 1;
-    }
-    static int size2() {
-        log.info("size 2");
-        return 1;
-    }
-    static boolean size3() {
-        log.info("size 3");
-        return true;
-    }
-    */
 }

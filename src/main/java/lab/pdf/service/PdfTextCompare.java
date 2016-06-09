@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -19,9 +20,16 @@ public class PdfTextCompare {
     private static final Logger log = LoggerFactory.getLogger(PdfTextCompare.class);
 
     public boolean compareFromInputstream(final String fileName1, final String fileName2) throws IOException {
-        final InputStream in1 = new FileInputStream(fileName1);
-        final InputStream in2 = new FileInputStream(fileName2);
-        return compare(in1, in2);
+        final InputStream in1 = getInputStream(fileName1);
+        final InputStream in2 = getInputStream(fileName2);
+        final boolean bool = compare(in1, in2);
+        in1.close();
+        in2.close();
+        return bool;
+    }
+
+    private InputStream getInputStream(final String fileName) throws FileNotFoundException {
+        return new FileInputStream(fileName);
     }
 
     public boolean compare(final String fileName1, final String fileName2) throws IOException {
