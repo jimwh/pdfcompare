@@ -36,10 +36,10 @@ public class WatermarkService {
     }
 
     private ByteArrayOutputStream waterMark(final String text, final PdfReader reader) throws IOException, DocumentException {
-        // if read only, don't bother further, simply return null
         if (reader.isEncrypted() || reader.isMetadataEncrypted()) {
             throw new IOException("Cannot modify encrypted pdf");
         }
+
         final ByteArrayOutputStream dest = new ByteArrayOutputStream();
         final int totalPages = reader.getNumberOfPages();
         final PdfStamper stamper = new PdfStamper(reader, dest);
