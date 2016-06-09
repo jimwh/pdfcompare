@@ -1,5 +1,6 @@
 package lab.pdf.service;
 
+import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.Rectangle;
@@ -31,7 +32,8 @@ public class PdfStampService {
 
     private static final Logger log = LoggerFactory.getLogger(PdfStampService.class);
 
-    public ByteArrayOutputStream approvalStamper(final String consentNumber,
+    public ByteArrayOutputStream approvalStamper(final String fstLine,
+                                                 final String consentNumber,
                                                  final String fromNumber,
                                                  final Date approvalDate,
                                                  final Date expiryDate,
@@ -62,7 +64,7 @@ public class PdfStampService {
             //put content over (not under)
             final PdfContentByte content = pdfStamper.getOverContent(i);
             final PdfGState pdfGState = new PdfGState();
-            pdfGState.setFillOpacity(0.5f);
+            pdfGState.setFillOpacity(0.8f);
             content.setGState(pdfGState);
             content.saveState();
             content.addImage(image);
@@ -74,7 +76,6 @@ public class PdfStampService {
                     isPortraitMode);
             approvalDateStamp.stampText();
 
-
             final ExpiryDateStamp expiredDateStamp = new ExpiryDateStamp(content,
                     rectangle,
                     baseFont,
@@ -83,18 +84,18 @@ public class PdfStampService {
             expiredDateStamp.stampText();
             content.restoreState();
 
-            addApprovalFooter(consentNumber, fromNumber, i, totalPages, content);
+            updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
         }
         pdfStamper.close();
         pdfReader.close();
         return byteArrayOutputStream;
     }
 
-
-    private void addApprovalFooter(final String consentNumber,
-                                   final String fromNumber,
-                                   final int x, final int y, final PdfContentByte contentByte) {
-        final PdfPTable pdfTable = addPdfFooter.getApprovalFooterTable(consentNumber, fromNumber, x, y);
+    private void updatePageFooterTable(final String fstLine,
+                                       final String consentNumber,
+                                       final String fromNumber,
+                                       final int x, final int y, final PdfContentByte contentByte) {
+        final PdfPTable pdfTable = addPdfFooter.getFooterTable(fstLine, consentNumber, fromNumber, x, y);
         pdfTable.writeSelectedRows(0, -1, 24, 50, contentByte);
     }
 
@@ -197,6 +198,230 @@ public class PdfStampService {
 
             this.content.endText();
         }
+    }
+
+
+    public ByteArrayOutputStream ngsRuleFailStamper(final String fstLine,
+                                                 final String consentNumber,
+                                                 final String fromNumber,
+                                                 final InputStream inputStream) throws IOException, DocumentException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        final PdfReader pdfReader = new PdfReader(inputStream);
+        final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
+
+        final Image image = Image.getInstance(getResource("inactiveConsentDevice.jpg"));
+        final int totalPages = pdfReader.getNumberOfPages();
+        for (int i = 1; i <= totalPages; i++) {
+            final Rectangle rectangle = pdfReader.getCropBox(i);
+            // Ensure all the images will have a height of one inch.
+            image.scaleToFit(1000f, 35.5f);
+            final int rotation = pdfReader.getPageRotation(i);
+            final boolean isPortraitMode = rotation == 0 || rotation == 180;
+            if (isPortraitMode) {
+                image.setAbsolutePosition(rectangle.getRight(10f) - image.getScaledWidth(), rectangle.getBottom(20f));
+            } else {
+                image.setAbsolutePosition(rectangle.getTop(20f) - image.getScaledWidth(), rectangle.getLeft(5f));
+            }
+
+            final PdfContentByte content = pdfStamper.getOverContent(i);
+            final PdfGState pdfGState = new PdfGState();
+            pdfGState.setFillOpacity(1f);
+
+            content.setGState(pdfGState);
+            content.saveState();
+            content.addImage(image);
+
+            content.restoreState();
+
+            updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
+        }
+        pdfStamper.close();
+        pdfReader.close();
+        return byteArrayOutputStream;
+    }
+
+
+    public ByteArrayOutputStream inactiveStamper(final String fstLine,
+                                                 final String consentNumber,
+                                                 final String fromNumber,
+                                                 final InputStream inputStream) throws IOException, DocumentException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        final PdfReader pdfReader = new PdfReader(inputStream);
+        final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
+
+        // final Image image = Image.getInstance(getResource("inactiveConsent.jpg"));
+        final Image image = getImage("inactiveConsent.jpg");
+        final BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
+        final int totalPages = pdfReader.getNumberOfPages();
+        for (int i = 1; i <= totalPages; i++) {
+            final Rectangle rectangle = pdfReader.getCropBox(i);
+            image.scaleToFit(1000f, 35.5f);
+            final int rotation = pdfReader.getPageRotation(i);
+            final boolean isPortraitMode = rotation == 0 || rotation == 180;
+            if (isPortraitMode) {
+                image.setAbsolutePosition(rectangle.getRight(10f) - image.getScaledWidth(), rectangle.getBottom(20f));
+            } else {
+                image.setAbsolutePosition(rectangle.getTop(20f) - image.getScaledWidth(), rectangle.getLeft(5f));
+            }
+
+            final PdfContentByte content = pdfStamper.getOverContent(i);
+            final PdfGState pdfGState = new PdfGState();
+            pdfGState.setFillOpacity(0.5f);
+            content.setGState(pdfGState);
+            content.saveState();
+            content.addImage(image);
+
+            final InactiveStamp inactiveStamp = new InactiveStamp(content,
+                    rectangle,
+                    baseFont,
+                    "Inactive",
+                    isPortraitMode);
+            inactiveStamp.stampText();
+
+            content.restoreState();
+
+            updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
+        }
+        pdfStamper.close();
+        pdfReader.close();
+        return byteArrayOutputStream;
+    }
+
+    private class InactiveStamp extends TextStamp {
+        public InactiveStamp(final PdfContentByte contentByte,
+                                 final Rectangle cropBox,
+                                 final BaseFont baseFont,
+                                 final String text,
+                                 final boolean isPortrait) {
+            super(contentByte,
+                    cropBox,
+                    baseFont,
+                    isPortrait,
+                    text,
+                    22f,          // fontSize
+                    161f,         // rightMargin
+                    30f,          // bottomMargin
+                    174f,         // topMargin
+                    16f + 115f);  // leftMargin
+        }
+    }
+
+    private Image getImage(final String name) throws IOException, BadElementException {
+        return Image.getInstance(getResource(name));
+    }
+
+    public ByteArrayOutputStream expiredStamper(final String fstLine,
+                                                 final String consentNumber,
+                                                 final String fromNumber,
+                                                 final InputStream inputStream) throws IOException, DocumentException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        final PdfReader pdfReader = new PdfReader(inputStream);
+        final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
+
+        final Image image = getImage("inactiveConsent.jpg");
+        final BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
+        final int totalPages = pdfReader.getNumberOfPages();
+        for (int i = 1; i <= totalPages; i++) {
+            final Rectangle rectangle = pdfReader.getCropBox(i);
+            image.scaleToFit(1000f, 35.5f);
+            final int rotation = pdfReader.getPageRotation(i);
+            final boolean isPortraitMode = rotation == 0 || rotation == 180;
+            if (isPortraitMode) {
+                image.setAbsolutePosition(rectangle.getRight(10f) - image.getScaledWidth(), rectangle.getBottom(20f));
+            } else {
+                image.setAbsolutePosition(rectangle.getTop(20f) - image.getScaledWidth(), rectangle.getLeft(5f));
+            }
+
+            final PdfContentByte content = pdfStamper.getOverContent(i);
+            final PdfGState pdfGState = new PdfGState();
+            pdfGState.setFillOpacity(0.5f);
+            content.setGState(pdfGState);
+            content.saveState();
+            content.addImage(image);
+
+            final ExpiredStamp expiredStamp = new ExpiredStamp(content,
+                    rectangle,
+                    baseFont,
+                    "Expired",
+                    isPortraitMode);
+            expiredStamp.stampText();
+
+            content.restoreState();
+
+            updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
+        }
+        pdfStamper.close();
+        pdfReader.close();
+        return byteArrayOutputStream;
+    }
+
+    private class ExpiredStamp extends TextStamp {
+        public ExpiredStamp(final PdfContentByte contentByte,
+                             final Rectangle cropBox,
+                             final BaseFont baseFont,
+                             final String text,
+                             final boolean isPortrait) {
+            super(contentByte,
+                    cropBox,
+                    baseFont,
+                    isPortrait,
+                    text,
+                    22f,          // fontSize
+                    161f,         // rightMargin
+                    30f,          // bottomMargin
+                    174f,         // topMargin
+                    16f + 115f);  // leftMargin
+        }
+    }
+
+
+    public ByteArrayOutputStream supersededStamper(final String fstLine,
+                                                final String consentNumber,
+                                                final String fromNumber,
+                                                final InputStream inputStream) throws IOException, DocumentException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        final PdfReader pdfReader = new PdfReader(inputStream);
+        final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
+
+        final Image image = getImage("inactiveConsent.jpg");
+        final BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
+        final int totalPages = pdfReader.getNumberOfPages();
+        for (int i = 1; i <= totalPages; i++) {
+            final Rectangle rectangle = pdfReader.getCropBox(i);
+            image.scaleToFit(1000f, 35.5f);
+            final int rotation = pdfReader.getPageRotation(i);
+            final boolean isPortraitMode = rotation == 0 || rotation == 180;
+            if (isPortraitMode) {
+                image.setAbsolutePosition(rectangle.getRight(10f) - image.getScaledWidth(), rectangle.getBottom(20f));
+            } else {
+                image.setAbsolutePosition(rectangle.getTop(20f) - image.getScaledWidth(), rectangle.getLeft(5f));
+            }
+
+            final PdfContentByte content = pdfStamper.getOverContent(i);
+            final PdfGState pdfGState = new PdfGState();
+            pdfGState.setFillOpacity(0.5f);
+            content.setGState(pdfGState);
+            content.saveState();
+            content.addImage(image);
+
+            final ExpiredStamp expiredStamp = new ExpiredStamp(content,
+                    rectangle,
+                    baseFont,
+                    "Superseded",
+                    isPortraitMode);
+            expiredStamp.stampText();
+
+            content.restoreState();
+
+            updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
+        }
+        pdfStamper.close();
+        pdfReader.close();
+        return byteArrayOutputStream;
     }
 
 }

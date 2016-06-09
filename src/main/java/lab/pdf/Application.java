@@ -3,7 +3,6 @@ package lab.pdf;
 import com.itextpdf.text.DocumentException;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -62,9 +61,16 @@ public class Application {
 
         // bodyCompare(ctx, args);
 
-        // testPdfStamp(ctx, args[0]);
-        // testPdfStamp(ctx, "/tmp/foo.pdf");
-        testPdfStamp(ctx, "./LegacyConsentForm.pdf");
+        // testApprovalStamp(ctx, args[0]);
+        // testApprovalStamp(ctx, "/tmp/foo.pdf");
+
+        // testApprovalStamp(ctx, "./LegacyConsentForm.pdf");
+        // testNgsRuleFailStamp(ctx, "./LegacyConsentForm.pdf");
+        // testInactiveStamp(ctx, "./LegacyConsentForm.pdf");
+        // testExpiredStamp(ctx, "./LegacyConsentForm.pdf");
+        // testSupersededStamp(ctx, "./LegacyConsentForm.pdf");
+
+        testEnrollmentClosedStamp(ctx, "./LegacyConsentForm.pdf");
         SpringApplication.exit(ctx);
         log.info("done...");
     }
@@ -98,7 +104,7 @@ public class Application {
     }
 
 
-    static void testPdfStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+    static void testApprovalStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
         log.info("input fileName={}", fileName);
         final String consentNumber="CF-ABCD5678";
         final String fromNumber="CF-ABCD1234";
@@ -107,7 +113,9 @@ public class Application {
         final InputStream inputStream = getInputStreamFromFile(fileName);
 
         final PdfStampService stampService=ctx.getBean(PdfStampService.class);
+        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
         final ByteArrayOutputStream outputStream = stampService.approvalStamper(
+                line1,
                 consentNumber, fromNumber,
                 approvalDate, expiryDate,
                 inputStream);
@@ -129,4 +137,126 @@ public class Application {
     static InputStream getInputStreamFromFile(final String name) throws FileNotFoundException {
         return new FileInputStream(name);
     }
+
+    static void testNgsRuleFailStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("input fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+
+
+        final InputStream inputStream = getInputStreamFromFile(fileName);
+
+        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
+        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
+        final ByteArrayOutputStream outputStream = stampService.ngsRuleFailStamper(
+                line1,
+                consentNumber, fromNumber,
+                inputStream);
+        //
+        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
+        ByteArrayOutputStream wout = watermarkService.waterMark(outputStream);
+
+        log.info("output fileName=/tmp/stamped.pdf");
+        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
+        wout.writeTo(fileOutputStream);
+        fileOutputStream.close();
+        inputStream.close();
+    }
+
+    static void testInactiveStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("input fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+        final InputStream inputStream = getInputStreamFromFile(fileName);
+
+        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
+        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
+        final ByteArrayOutputStream outputStream = stampService.inactiveStamper(
+                line1,
+                consentNumber, fromNumber,
+                inputStream);
+        //
+        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
+        ByteArrayOutputStream wout = watermarkService.waterMark("Inactive", outputStream);
+
+        log.info("output fileName=/tmp/stamped.pdf");
+        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
+        wout.writeTo(fileOutputStream);
+        fileOutputStream.close();
+        inputStream.close();
+    }
+
+    static void testExpiredStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("input fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+        final InputStream inputStream = getInputStreamFromFile(fileName);
+
+        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
+        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
+        final ByteArrayOutputStream outputStream = stampService.expiredStamper(
+                line1,
+                consentNumber, fromNumber,
+                inputStream);
+        //
+        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
+        ByteArrayOutputStream wout = watermarkService.waterMark("Expired", outputStream);
+
+        log.info("output fileName=/tmp/stamped.pdf");
+        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
+        wout.writeTo(fileOutputStream);
+        fileOutputStream.close();
+        inputStream.close();
+    }
+
+    static void testSupersededStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("input fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+        final InputStream inputStream = getInputStreamFromFile(fileName);
+
+        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
+        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
+        final ByteArrayOutputStream outputStream = stampService.supersededStamper(
+                line1,
+                consentNumber, fromNumber,
+                inputStream);
+        //
+        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
+        ByteArrayOutputStream wout = watermarkService.waterMark("Superseded", outputStream);
+
+        log.info("output fileName=/tmp/stamped.pdf");
+        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
+        wout.writeTo(fileOutputStream);
+        fileOutputStream.close();
+        inputStream.close();
+    }
+
+
+    static void testEnrollmentClosedStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("input fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+        final Date approvalDate = DateTime.now().toDate();
+        final Date expiryDate = DateTime.now().plusYears(1).toDate();
+        final InputStream inputStream = getInputStreamFromFile(fileName);
+
+        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
+        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
+        final ByteArrayOutputStream outputStream = stampService.approvalStamper(
+                line1,
+                consentNumber, fromNumber,
+                approvalDate, expiryDate,
+                inputStream);
+        //
+        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
+        ByteArrayOutputStream wout = watermarkService.waterMarkOnStamper("Study Closed to Enrollment", outputStream);
+
+        log.info("output fileName=/tmp/stamped.pdf");
+        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
+        wout.writeTo(fileOutputStream);
+        fileOutputStream.close();
+        inputStream.close();
+    }
+
 }

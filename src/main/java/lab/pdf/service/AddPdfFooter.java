@@ -26,7 +26,7 @@ public class AddPdfFooter {
 
     private static final Logger log = LoggerFactory.getLogger(AddPdfFooter.class);
 
-    static final String LINE1="Medical Center Institutional Review Board: 212-851-7040";
+
 
     public void addFooter(final String fileName) throws IOException, DocumentException {
         final PdfReader reader = new PdfReader(fileName);
@@ -51,17 +51,19 @@ public class AddPdfFooter {
         return table;
     }
 
-    public PdfPTable getApprovalFooterTable(final String consentNumber, final String copiedFromNumber,
-                                            final int x, final int y) {
-
+    public PdfPTable getFooterTable(
+            final String fstLine,
+            final String consentNumber,
+            final String fromNumber,
+            final int x, final int y) {
         final PdfPTable table = new PdfPTable(1);
         table.setTotalWidth(350);
         table.setLockedWidth(true);
         final String space=String.format("%-60s", ' ');
         final String page = String.format("%sPage %d of %d", space, x, y);
-        final String line2 = getLine2(consentNumber, copiedFromNumber);
+        final String line2 = getLine2(consentNumber, fromNumber);
         final String line3 = printedOn();
-        final String paragraphString=String.format("%s%n%s%n%s%s", LINE1, line2, line3, page);
+        final String paragraphString=String.format("%s%n%s%n%s%s", fstLine, line2, line3, page);
         final Font font = FontFactory.getFont(Font.FontFamily.HELVETICA.name(), 9);
         final Paragraph paragraph=new Paragraph(paragraphString, font);
         final PdfPCell cell =  new PdfPCell(paragraph);
@@ -70,6 +72,7 @@ public class AddPdfFooter {
 
         return table;
     }
+
 
     private String printedOn() {
         final DateTime now = DateTime.now();
@@ -81,4 +84,25 @@ public class AddPdfFooter {
                 String.format("Consent Form #: %s", consentNum) :
                 String.format("Consent Form #: %s  Copied From #: %s", consentNum, fromNum);
     }
+
+    public PdfPTable getNgsRuleFailFooterTable(final String fstLine,
+                                            final String consentNumber, final String fromNumber,
+                                            final int x, final int y) {
+        final PdfPTable table = new PdfPTable(1);
+        table.setTotalWidth(350);
+        table.setLockedWidth(true);
+        final String space=String.format("%-60s", ' ');
+        final String page = String.format("%sPage %d of %d", space, x, y);
+        final String line2 = getLine2(consentNumber, fromNumber);
+        final String line3 = printedOn();
+        final String paragraphString=String.format("%s%n%s%n%s%s", fstLine, line2, line3, page);
+        final Font font = FontFactory.getFont(Font.FontFamily.HELVETICA.name(), 9);
+        final Paragraph paragraph=new Paragraph(paragraphString, font);
+        final PdfPCell cell =  new PdfPCell(paragraph);
+        cell.setBorder(Rectangle.NO_BORDER);
+        table.addCell(cell);
+
+        return table;
+    }
+
 }
