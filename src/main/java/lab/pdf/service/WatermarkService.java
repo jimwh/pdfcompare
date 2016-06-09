@@ -40,9 +40,9 @@ public class WatermarkService {
             throw new IOException("Cannot modify encrypted pdf");
         }
 
-        final ByteArrayOutputStream dest = new ByteArrayOutputStream();
+        final ByteArrayOutputStream output = new ByteArrayOutputStream();
         final int totalPages = reader.getNumberOfPages();
-        final PdfStamper stamper = new PdfStamper(reader, dest);
+        final PdfStamper stamper = new PdfStamper(reader, output);
         final PdfGState pdfGState = new PdfGState();
         pdfGState.setFillOpacity(0.2f);
 
@@ -56,7 +56,7 @@ public class WatermarkService {
         }
 
         stamper.close();
-        return dest;
+        return output;
     }
 
     private Phrase getWaterMarkPhrase(final String text) {
