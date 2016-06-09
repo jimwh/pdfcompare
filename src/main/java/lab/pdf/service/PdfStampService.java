@@ -28,7 +28,7 @@ public class PdfStampService {
     @Resource
     private transient CustomerResourceLoader resourceLoader;
     @Resource
-    private transient AddPdfFooter addPdfFooter;
+    private transient FooterService footerService;
 
     private static final Logger log = LoggerFactory.getLogger(PdfStampService.class);
 
@@ -95,7 +95,7 @@ public class PdfStampService {
                                        final String consentNumber,
                                        final String fromNumber,
                                        final int x, final int y, final PdfContentByte contentByte) {
-        final PdfPTable pdfTable = addPdfFooter.getFooterTable(fstLine, consentNumber, fromNumber, x, y);
+        final PdfPTable pdfTable = footerService.getFooterTable(fstLine, consentNumber, fromNumber, x, y);
         pdfTable.writeSelectedRows(0, -1, 24, 50, contentByte);
     }
 
