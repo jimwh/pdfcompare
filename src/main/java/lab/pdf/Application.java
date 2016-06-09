@@ -5,6 +5,7 @@ import com.itextpdf.text.DocumentException;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -103,7 +104,7 @@ public class Application {
         final String fromNumber="CF-ABCD1234";
         final Date approvalDate = DateTime.now().toDate();
         final Date expiryDate = DateTime.now().plusYears(1).toDate();
-        final InputStream inputStream = new FileInputStream(fileName);
+        final InputStream inputStream = getInputStreamFromFile(fileName);
 
         final PdfStampService stampService=ctx.getBean(PdfStampService.class);
         final ByteArrayOutputStream outputStream = stampService.approvalStamper(
@@ -115,10 +116,17 @@ public class Application {
         ByteArrayOutputStream wout = watermarkService.waterMark("Expired", outputStream);
 
         log.info("output fileName=/tmp/stamped.pdf");
-        FileOutputStream fileOutputStream=new FileOutputStream(new File("/tmp/stamped.pdf"));
+        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
         wout.writeTo(fileOutputStream);
         fileOutputStream.close();
         inputStream.close();
     }
 
+    static FileOutputStream getFileOutputStream(final String name) throws FileNotFoundException {
+        return new FileOutputStream(name);
+    }
+
+    static InputStream getInputStreamFromFile(final String name) throws FileNotFoundException {
+        return new FileInputStream(name);
+    }
 }
