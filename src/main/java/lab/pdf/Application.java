@@ -68,9 +68,9 @@ public class Application {
         // testNgsRuleFailStamp(ctx, "./LegacyConsentForm.pdf");
         // testInactiveStamp(ctx, "./LegacyConsentForm.pdf");
         // testExpiredStamp(ctx, "./LegacyConsentForm.pdf");
-        // testSupersededStamp(ctx, "./LegacyConsentForm.pdf");
+        testSupersededStamp(ctx, "/home/jh3389/consent_form/600-2000.pdf");
 
-        testEnrollmentClosedStamp(ctx, "./LegacyConsentForm.pdf");
+        //testEnrollmentClosedStamp(ctx, "/home/jh3389/consent_form/600-2000.pdf");
         SpringApplication.exit(ctx);
         log.info("done...");
     }

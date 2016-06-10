@@ -1,12 +1,14 @@
 package lab.pdf.service;
 
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
+import com.itextpdf.text.Font.FontFamily;
 import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
-
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,27 @@ public class FooterService {
         final Paragraph paragraph=new Paragraph(paragraphString, font);
         final PdfPCell cell =  new PdfPCell(paragraph);
         cell.setBorder(Rectangle.NO_BORDER);
+        table.addCell(cell);
+
+        return table;
+    }
+
+    public PdfPTable getStampTable(final String text) {
+        final PdfPTable table = new PdfPTable(1);
+        table.setTotalWidth(110);
+        table.setLockedWidth(true);
+        table.setHorizontalAlignment(Element.ALIGN_CENTER);
+        final Font font = new Font(FontFamily.HELVETICA, 17, Font.BOLD,  BaseColor.GRAY.darker());
+        // final Font font = FontFactory.getFont(FontFamily.HELVETICA, 16, Font.BOLD);
+        final Paragraph paragraph=new Paragraph(text, font);
+        paragraph.setAlignment(Element.ALIGN_CENTER);
+        final PdfPCell cell =  new PdfPCell(paragraph);
+        cell.setBorder(Rectangle.BOX);
+        cell.setBorderWidth(1f);
+        cell.setPaddingBottom(6f);
+        cell.setBorderColor(BaseColor.LIGHT_GRAY.darker());
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_CENTER);
         table.addCell(cell);
 
         return table;

@@ -91,6 +91,12 @@ public class PdfStampService {
         return byteArrayOutputStream;
     }
 
+    private void updateLeftFooterTable(final String fstLine,
+                                       final PdfContentByte contentByte) {
+        final PdfPTable pdfTable = footerService.getStampTable(fstLine);
+        pdfTable.writeSelectedRows(0, -1, 460, 50, contentByte);
+    }
+
     private void updatePageFooterTable(final String fstLine,
                                        final String consentNumber,
                                        final String fromNumber,
@@ -387,37 +393,23 @@ public class PdfStampService {
         final PdfReader pdfReader = new PdfReader(inputStream);
         final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
 
-        final Image image = getImage("inactiveConsent.jpg");
-        final BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
         final int totalPages = pdfReader.getNumberOfPages();
         for (int i = 1; i <= totalPages; i++) {
             final Rectangle rectangle = pdfReader.getCropBox(i);
-            image.scaleToFit(1000f, 35.5f);
             final int rotation = pdfReader.getPageRotation(i);
             final boolean isPortraitMode = rotation == 0 || rotation == 180;
-            if (isPortraitMode) {
-                image.setAbsolutePosition(rectangle.getRight(10f) - image.getScaledWidth(), rectangle.getBottom(20f));
-            } else {
-                image.setAbsolutePosition(rectangle.getTop(20f) - image.getScaledWidth(), rectangle.getLeft(5f));
-            }
 
             final PdfContentByte content = pdfStamper.getOverContent(i);
             final PdfGState pdfGState = new PdfGState();
             pdfGState.setFillOpacity(0.5f);
             content.setGState(pdfGState);
             content.saveState();
-            content.addImage(image);
-
-            final ExpiredStamp expiredStamp = new ExpiredStamp(content,
-                    rectangle,
-                    baseFont,
-                    "Superseded",
-                    isPortraitMode);
-            expiredStamp.stampText();
 
             content.restoreState();
 
             updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
+            updateLeftFooterTable("Superseded", content);
+
         }
         pdfStamper.close();
         pdfReader.close();
