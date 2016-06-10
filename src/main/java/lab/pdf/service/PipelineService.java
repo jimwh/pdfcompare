@@ -31,7 +31,7 @@ public class PipelineService {
         final ByteArrayOutputStream footerOutput = footerService.addFooterInfo(fstLine, numberLine, inputStream);
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(footerOutput.toByteArray());
 
-        final ByteArrayOutputStream outputStream = stampService.approvalStamper(
+        final ByteArrayOutputStream outputStream = stampService.approvalStamp(
                 approvalDate, expiryDate,
                 byteArrayInputStream);
         return outputStream;

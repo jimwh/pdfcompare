@@ -11,8 +11,6 @@ import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -29,11 +27,9 @@ public class PdfStampService {
     @Resource
     private transient FooterService footerService;
 
-    private static final Logger log = LoggerFactory.getLogger(PdfStampService.class);
-
-    public ByteArrayOutputStream approvalStamper(final Date approvalDate,
-                                                 final Date expiryDate,
-                                                 final InputStream inputStream) throws IOException, DocumentException {
+    public ByteArrayOutputStream approvalStamp(final Date approvalDate,
+                                               final Date expiryDate,
+                                               final InputStream inputStream) throws IOException, DocumentException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         final PdfReader pdfReader = new PdfReader(inputStream);
@@ -84,8 +80,8 @@ public class PdfStampService {
         return byteArrayOutputStream;
     }
 
-    private void updateLeftFooterTable(final String fstLine,
-                                       final PdfContentByte contentByte) {
+    private void updateStampTable(final String fstLine,
+                                  final PdfContentByte contentByte) {
         final PdfPTable pdfTable = footerService.getStampTable(fstLine);
         pdfTable.writeSelectedRows(0, -1, 460, 50, contentByte);
     }
@@ -108,7 +104,7 @@ public class PdfStampService {
                     cropBox,
                     baseFont,
                     isPortrait,
-                    new DateTime(date).toString("MM/dd/yyyy"),
+                    mmddyyyy(date),
                     6f + 2f,     // fontSize
                     161f - 55f,  // rightMargin
                     30f + 5f,    // bottomMargin
@@ -127,10 +123,10 @@ public class PdfStampService {
                     cropBox,
                     baseFont,
                     isPortraitMode,
-                    new DateTime(date).toString("MM/dd/yyyy"),
+                    mmddyyyy(date),
                     6f + 2f, // fontSize
                     151f - 45f, // rightMargin
-                    23  + 2f,   // bottomMargin
+                    23 + 2f,   // bottomMargin
                     164 - 2f,  // topMargin
                     10f + 45f); // leftMargin
         }
@@ -221,7 +217,6 @@ public class PdfStampService {
             content.addImage(image);
 
             content.restoreState();
-
         }
         pdfStamper.close();
         pdfReader.close();
@@ -231,8 +226,8 @@ public class PdfStampService {
 
     public ByteArrayOutputStream tableStamp(final String stampText,
                                             final InputStream inputStream) throws IOException, DocumentException {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final PdfReader pdfReader = new PdfReader(inputStream);
         final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
 
@@ -243,12 +238,15 @@ public class PdfStampService {
             pdfGState.setFillOpacity(0.5f);
             content.setGState(pdfGState);
             content.saveState();
+            updateStampTable(stampText, content);
             content.restoreState();
-            updateLeftFooterTable(stampText, content);
         }
         pdfStamper.close();
         pdfReader.close();
         return byteArrayOutputStream;
     }
 
+    private String mmddyyyy(final Date date) {
+        return date == null ? "" : new DateTime(date).toString("MM/dd/yyyy");
+    }
 }
