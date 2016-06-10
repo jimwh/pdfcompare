@@ -25,15 +25,16 @@ public class WatermarkService {
 
     private static final int ROTATION = 45;
 
+    public enum Status {
+        Expired,
+        Inactive,
+        Superseded,
+        ClosedEnrollment,
+        NGS
+    }
+
     @Resource
     private CustomerResourceLoader resourceLoader;
-
-    public ByteArrayOutputStream waterMark(final String text, final byte[] source) throws IOException, DocumentException {
-        final PdfReader reader = new PdfReader(source);
-        final ByteArrayOutputStream out = waterMark(text, reader);
-        reader.close();
-        return out;
-    }
 
     public ByteArrayOutputStream waterMark(final String text, final ByteArrayOutputStream source) throws IOException, DocumentException {
         final PdfReader reader = new PdfReader(source.toByteArray());
@@ -42,9 +43,9 @@ public class WatermarkService {
         return out;
     }
 
-    public ByteArrayOutputStream waterMarkOnStamper(final String text, final ByteArrayOutputStream source) throws IOException, DocumentException {
+    public ByteArrayOutputStream waterMark(final Status status, final ByteArrayOutputStream source) throws IOException, DocumentException {
         final PdfReader reader = new PdfReader(source.toByteArray());
-        final ByteArrayOutputStream out = waterMarkOnStamper(text, reader);
+        final ByteArrayOutputStream out = waterMark(status, reader);
         reader.close();
         return out;
     }
@@ -65,7 +66,7 @@ public class WatermarkService {
         final int totalPages = reader.getNumberOfPages();
         final PdfStamper stamper = new PdfStamper(reader, output);
         final PdfGState pdfGState = new PdfGState();
-        pdfGState.setFillOpacity(0.2f);
+        pdfGState.setFillOpacity(0.5f);
 
         for (int page = 1; page <= totalPages; page++) {
             final PdfContentByte under = stamper.getUnderContent(page);
@@ -104,14 +105,20 @@ public class WatermarkService {
 
     private Phrase getWaterMarkPhrase(final String text) {
         return new Phrase(text,
-                new Font(FontFamily.HELVETICA, 110, Font.BOLD,
-                        BaseColor.GRAY.darker()));
+                new Font(FontFamily.HELVETICA, 100, Font.BOLD,
+                        BaseColor.GRAY.brighter()));
     }
 
     private Phrase getWaterMarkPhrase(final String text, final int fontSize) {
         return new Phrase(text,
                 new Font(FontFamily.HELVETICA, fontSize, Font.BOLD,
-                        BaseColor.BLACK.darker()));
+                        BaseColor.RED.brighter()));
+    }
+
+    private Phrase getStudayClosedToEnrollmentPhrase() {
+        return new Phrase("Study Closed to Enrollment",
+                new Font(FontFamily.HELVETICA, 18, Font.BOLD,
+                        BaseColor.RED.brighter()));
     }
 
     private byte[] getResource(final String name) throws IOException {
@@ -121,7 +128,8 @@ public class WatermarkService {
         return bytes;
     }
 
-    private ByteArrayOutputStream waterMarkOnStamper(final String text, final PdfReader reader) throws IOException, DocumentException {
+    // expired, inactive, superseded, study of closed enrollment
+    private ByteArrayOutputStream waterMark(final Status status, final PdfReader reader) throws IOException, DocumentException {
         if (reader.isEncrypted() || reader.isMetadataEncrypted()) {
             throw new IOException("Cannot modify encrypted pdf");
         }
@@ -130,16 +138,51 @@ public class WatermarkService {
         final int totalPages = reader.getNumberOfPages();
         final PdfStamper stamper = new PdfStamper(reader, output);
         final PdfGState pdfGState = new PdfGState();
-        pdfGState.setFillOpacity(0.2f);
+        pdfGState.setFillOpacity(0.5f);
 
         for (int page = 1; page <= totalPages; page++) {
-            //final PdfContentByte under = stamper.getUnderContent(page);
-            final PdfContentByte under = stamper.getOverContent(page);
-            under.setGState(pdfGState);
-            ColumnText.showTextAligned(under,
-                    Element.ALIGN_CENTER,
-                    getWaterMarkPhrase(text, 24),
-                    440, 30, 0);
+            final PdfContentByte over = stamper.getOverContent(page);
+            over.setGState(pdfGState);
+            if (Status.Expired == status) {
+                // on stamp
+                ColumnText.showTextAligned(over,
+                        Element.ALIGN_CENTER,
+                        getWaterMarkPhrase(Status.Expired.toString(), 24),
+                        460, 38, ROTATION);
+                // in the middle of page
+                ColumnText.showTextAligned(over,
+                        Element.ALIGN_CENTER,
+                        getWaterMarkPhrase(Status.Expired.toString()),
+                        280, 390, ROTATION);
+            } else if (status == Status.Inactive) {
+                // on stamp
+                ColumnText.showTextAligned(over,
+                        Element.ALIGN_CENTER,
+                        getWaterMarkPhrase(Status.Inactive.toString(), 24),
+                        460, 38, ROTATION);
+                // in the middle of page
+                ColumnText.showTextAligned(over,
+                        Element.ALIGN_CENTER,
+                        getWaterMarkPhrase(Status.Inactive.toString()),
+                        280, 390, ROTATION);
+            } else if (status == Status.Superseded) {
+                // on stamp
+                ColumnText.showTextAligned(over,
+                        Element.ALIGN_CENTER,
+                        getWaterMarkPhrase(Status.Superseded.toString(), 24),
+                        460, 38, 30);
+                // in the middle of page
+                ColumnText.showTextAligned(over,
+                        Element.ALIGN_CENTER,
+                        getWaterMarkPhrase(Status.Superseded.toString()),
+                        300, 390, 30);
+            } else if (status == Status.ClosedEnrollment) {
+                ColumnText.showTextAligned(over,
+                        Element.ALIGN_CENTER,
+                        getStudayClosedToEnrollmentPhrase(),
+                        460, 38, 0);
+            }
+
         }
 
         stamper.close();

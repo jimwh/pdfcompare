@@ -1,6 +1,5 @@
 package lab.pdf.service;
 
-import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.Rectangle;
@@ -11,7 +10,6 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +31,7 @@ public class PdfStampService {
 
     private static final Logger log = LoggerFactory.getLogger(PdfStampService.class);
 
-    public ByteArrayOutputStream approvalStamper(final String fstLine,
-                                                 final String numberLine,
-                                                 final Date approvalDate,
+    public ByteArrayOutputStream approvalStamper(final Date approvalDate,
                                                  final Date expiryDate,
                                                  final InputStream inputStream) throws IOException, DocumentException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -44,7 +40,6 @@ public class PdfStampService {
         final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
 
         final Image image = Image.getInstance(getResource("approvalConsent.png"));
-        log.info("image={}", image != null);
         final BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
         final int totalPages = pdfReader.getNumberOfPages();
         for (int i = 1; i <= totalPages; i++) {
@@ -83,8 +78,6 @@ public class PdfStampService {
                     isPortraitMode);
             expiredDateStamp.stampText();
             content.restoreState();
-            final String pageLine = String.format("Page %d of %d", i, totalPages);
-            updatePageFooterTable(fstLine, numberLine, pageLine, content);
         }
         pdfStamper.close();
         pdfReader.close();
@@ -95,14 +88,6 @@ public class PdfStampService {
                                        final PdfContentByte contentByte) {
         final PdfPTable pdfTable = footerService.getStampTable(fstLine);
         pdfTable.writeSelectedRows(0, -1, 460, 50, contentByte);
-    }
-
-    private void updatePageFooterTable(final String fstLine,
-                                       final String numberLine,
-                                       final String pageLine,
-                                       final PdfContentByte contentByte) {
-        final PdfPTable pdfTable = footerService.getFooterTable(fstLine, numberLine, pageLine);
-        pdfTable.writeSelectedRows(0, -1, 24, 50, contentByte);
     }
 
     private byte[] getResource(final String name) throws IOException {
@@ -207,9 +192,7 @@ public class PdfStampService {
     }
 
 
-    public ByteArrayOutputStream ngsRuleFailStamper(final String fstLine,
-                                                 final String numberLine,
-                                                 final InputStream inputStream) throws IOException, DocumentException {
+    public ByteArrayOutputStream ngsRuleFailStamp(final InputStream inputStream) throws IOException, DocumentException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         final PdfReader pdfReader = new PdfReader(inputStream);
@@ -238,8 +221,7 @@ public class PdfStampService {
             content.addImage(image);
 
             content.restoreState();
-            final String pageLine = getPageLine(i, totalPages);
-            updatePageFooterTable(fstLine, numberLine, pageLine, content);
+
         }
         pdfStamper.close();
         pdfReader.close();
@@ -247,143 +229,8 @@ public class PdfStampService {
     }
 
 
-    public ByteArrayOutputStream inactiveStamper(final String fstLine,
-                                                 final String numberLine,
-                                                 final InputStream inputStream) throws IOException, DocumentException {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-        final PdfReader pdfReader = new PdfReader(inputStream);
-        final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
-
-        // final Image image = Image.getInstance(getResource("inactiveConsent.jpg"));
-        final Image image = getImage("inactiveConsent.jpg");
-        final BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
-        final int totalPages = pdfReader.getNumberOfPages();
-        for (int i = 1; i <= totalPages; i++) {
-            final Rectangle rectangle = pdfReader.getCropBox(i);
-            image.scaleToFit(1000f, 35.5f);
-            final int rotation = pdfReader.getPageRotation(i);
-            final boolean isPortraitMode = rotation == 0 || rotation == 180;
-            if (isPortraitMode) {
-                image.setAbsolutePosition(rectangle.getRight(10f) - image.getScaledWidth(), rectangle.getBottom(20f));
-            } else {
-                image.setAbsolutePosition(rectangle.getTop(20f) - image.getScaledWidth(), rectangle.getLeft(5f));
-            }
-
-            final PdfContentByte content = pdfStamper.getOverContent(i);
-            final PdfGState pdfGState = new PdfGState();
-            pdfGState.setFillOpacity(0.5f);
-            content.setGState(pdfGState);
-            content.saveState();
-            content.addImage(image);
-
-            final InactiveStamp inactiveStamp = new InactiveStamp(content,
-                    rectangle,
-                    baseFont,
-                    "Inactive",
-                    isPortraitMode);
-            inactiveStamp.stampText();
-
-            content.restoreState();
-            final String pageLine = getPageLine(i, totalPages);
-            updatePageFooterTable(fstLine, numberLine, pageLine, content);
-        }
-        pdfStamper.close();
-        pdfReader.close();
-        return byteArrayOutputStream;
-    }
-
-    private class InactiveStamp extends TextStamp {
-        public InactiveStamp(final PdfContentByte contentByte,
-                                 final Rectangle cropBox,
-                                 final BaseFont baseFont,
-                                 final String text,
-                                 final boolean isPortrait) {
-            super(contentByte,
-                    cropBox,
-                    baseFont,
-                    isPortrait,
-                    text,
-                    22f,          // fontSize
-                    161f,         // rightMargin
-                    30f,          // bottomMargin
-                    174f,         // topMargin
-                    16f + 115f);  // leftMargin
-        }
-    }
-
-    private Image getImage(final String name) throws IOException, BadElementException {
-        return Image.getInstance(getResource(name));
-    }
-
-    public ByteArrayOutputStream expiredStamper(final String fstLine,
-                                                 final String numberLine,
-                                                 final InputStream inputStream) throws IOException, DocumentException {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-        final PdfReader pdfReader = new PdfReader(inputStream);
-        final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
-
-        final Image image = getImage("inactiveConsent.jpg");
-        final BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
-        final int totalPages = pdfReader.getNumberOfPages();
-        for (int i = 1; i <= totalPages; i++) {
-            final Rectangle rectangle = pdfReader.getCropBox(i);
-            image.scaleToFit(1000f, 35.5f);
-            final int rotation = pdfReader.getPageRotation(i);
-            final boolean isPortraitMode = rotation == 0 || rotation == 180;
-            if (isPortraitMode) {
-                image.setAbsolutePosition(rectangle.getRight(10f) - image.getScaledWidth(), rectangle.getBottom(20f));
-            } else {
-                image.setAbsolutePosition(rectangle.getTop(20f) - image.getScaledWidth(), rectangle.getLeft(5f));
-            }
-
-            final PdfContentByte content = pdfStamper.getOverContent(i);
-            final PdfGState pdfGState = new PdfGState();
-            pdfGState.setFillOpacity(0.5f);
-            content.setGState(pdfGState);
-            content.saveState();
-            content.addImage(image);
-
-            final ExpiredStamp expiredStamp = new ExpiredStamp(content,
-                    rectangle,
-                    baseFont,
-                    "Expired",
-                    isPortraitMode);
-            expiredStamp.stampText();
-
-            content.restoreState();
-            final String pageLine = getPageLine(i, totalPages);
-            updatePageFooterTable(fstLine, numberLine, pageLine, content);
-        }
-        pdfStamper.close();
-        pdfReader.close();
-        return byteArrayOutputStream;
-    }
-
-    private class ExpiredStamp extends TextStamp {
-        public ExpiredStamp(final PdfContentByte contentByte,
-                             final Rectangle cropBox,
-                             final BaseFont baseFont,
-                             final String text,
-                             final boolean isPortrait) {
-            super(contentByte,
-                    cropBox,
-                    baseFont,
-                    isPortrait,
-                    text,
-                    22f,          // fontSize
-                    161f,         // rightMargin
-                    30f,          // bottomMargin
-                    174f,         // topMargin
-                    16f + 115f);  // leftMargin
-        }
-    }
-
-
-    public ByteArrayOutputStream supersededStamper(final String fstLine,
-                                                final String numberLine,
-                                                final InputStream inputStream) throws IOException, DocumentException {
+    public ByteArrayOutputStream tableStamp(final String stampText,
+                                            final InputStream inputStream) throws IOException, DocumentException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         final PdfReader pdfReader = new PdfReader(inputStream);
@@ -397,34 +244,6 @@ public class PdfStampService {
             content.setGState(pdfGState);
             content.saveState();
             content.restoreState();
-            final String pageLine = getPageLine(page, totalPages);
-            updatePageFooterTable(fstLine, numberLine, pageLine, content);
-            updateLeftFooterTable("Superseded", content);
-        }
-        pdfStamper.close();
-        pdfReader.close();
-        return byteArrayOutputStream;
-    }
-
-    public ByteArrayOutputStream tableStamper(final String stampText,
-                                              final String fstLine,
-                                              final String numberLine,
-                                              final InputStream inputStream) throws IOException, DocumentException {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-        final PdfReader pdfReader = new PdfReader(inputStream);
-        final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
-
-        final int totalPages = pdfReader.getNumberOfPages();
-        for (int page = 1; page <= totalPages; page++) {
-            final PdfContentByte content = pdfStamper.getOverContent(page);
-            final PdfGState pdfGState = new PdfGState();
-            pdfGState.setFillOpacity(0.5f);
-            content.setGState(pdfGState);
-            content.saveState();
-            content.restoreState();
-            final String pageLine = getPageLine(page, totalPages);
-            updatePageFooterTable(fstLine, numberLine, pageLine, content);
             updateLeftFooterTable(stampText, content);
         }
         pdfStamper.close();
@@ -432,13 +251,4 @@ public class PdfStampService {
         return byteArrayOutputStream;
     }
 
-    public String getNumberLine(final String consentNum, final String fromNum) {
-        return StringUtils.isBlank(fromNum) ?
-                String.format("Consent Form #: %s", consentNum) :
-                String.format("Consent Form #: %s  Copied From #: %s", consentNum, fromNum);
-    }
-
-    private String getPageLine(final int page, final int totalPages) {
-      return String.format("Page %d of %d", page, totalPages);
-    }
 }

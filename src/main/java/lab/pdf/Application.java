@@ -14,10 +14,9 @@ import lab.pdf.conf.DataSourceConfig;
 import lab.pdf.service.CustomerResourceLoader;
 import lab.pdf.service.PdfBodyCompare;
 import lab.pdf.service.PdfInfo;
-import lab.pdf.service.PdfStampService;
 import lab.pdf.service.PdfTextCompare;
+import lab.pdf.service.PipelineService;
 import lab.pdf.service.TextExtractor;
-import lab.pdf.service.WatermarkService;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +52,7 @@ public class Application {
         /*
         if( args.length == 3 ) {
             AddPdfFooter addPdfFooter=ctx.getBean(AddPdfFooter.class);
-            addPdfFooter.addFooter(args[2]);
+            addPdfFooter.addFooterInfo(args[2]);
         } else {
             FooBar fooBar = ctx.getBean(FooBar.class);
             log.info("foobar.dir={}", fooBar.getDownloadDir());
@@ -64,14 +63,20 @@ public class Application {
 
         // testApprovalStamp(ctx, args[0]);
         // testApprovalStamp(ctx, "/tmp/foo.pdf");
-
         // testApprovalStamp(ctx, "./LegacyConsentForm.pdf");
-        // testNgsRuleFailStamp(ctx, "./LegacyConsentForm.pdf");
-        // testInactiveStamp(ctx, "./LegacyConsentForm.pdf");
-        testExpiredStamp(ctx, "./LegacyConsentForm.pdf");
-        // testSupersededStamp(ctx, "./LegacyConsentForm.pdf");
 
-        //testEnrollmentClosedStamp(ctx, "/home/jh3389/consent_form/600-2000.pdf");
+        testExpiryPipeline(ctx, "./LegacyConsentForm.pdf");
+        testInactivePipeline(ctx, "./LegacyConsentForm.pdf");
+        testSupersededPipeline(ctx, "./LegacyConsentForm.pdf");
+        testNgsPipeline(ctx, "./LegacyConsentForm.pdf");
+        testInactiveStamp(ctx, "./LegacyConsentForm.pdf");
+        testSupersededStamp(ctx, "./LegacyConsentForm.pdf");
+
+        // testNgsRuleFailStamp(ctx, "./LegacyConsentForm.pdf");
+        // testExpiredStamp(ctx, "./LegacyConsentForm.pdf");
+
+        // testEnrollmentClosedStamp(ctx, "./LegacyConsentForm.pdf");
+
         SpringApplication.exit(ctx);
         log.info("done...");
     }
@@ -105,32 +110,6 @@ public class Application {
     }
 
 
-    static void testApprovalStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
-        log.info("input fileName={}", fileName);
-        final String consentNumber="CF-ABCD5678";
-        final String fromNumber="CF-ABCD1234";
-        final Date approvalDate = DateTime.now().toDate();
-        final Date expiryDate = DateTime.now().plusYears(1).toDate();
-        final InputStream inputStream = getInputStreamFromFile(fileName);
-
-        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-
-        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
-        final ByteArrayOutputStream outputStream = stampService.approvalStamper(
-                FstLine, numberLine,
-                approvalDate, expiryDate,
-                inputStream);
-        //
-        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
-        ByteArrayOutputStream wout = watermarkService.waterMark("Expired", outputStream);
-
-        log.info("output fileName=/tmp/stamped.pdf");
-        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
-        wout.writeTo(fileOutputStream);
-        fileOutputStream.close();
-        inputStream.close();
-    }
-
     static FileOutputStream getFileOutputStream(final String name) throws FileNotFoundException {
         return new FileOutputStream(name);
     }
@@ -139,71 +118,16 @@ public class Application {
         return new FileInputStream(name);
     }
 
-    static void testNgsRuleFailStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
-        log.info("input fileName={}", fileName);
-        final String consentNumber="CF-ABCD5678";
-        final String fromNumber="CF-ABCD1234";
-
-        final InputStream inputStream = getInputStreamFromFile(fileName);
-
-        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
-        final ByteArrayOutputStream outputStream = stampService.ngsRuleFailStamper(
-                FstLine,
-                numberLine,
-                inputStream);
-        //
-        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
-        ByteArrayOutputStream wout = watermarkService.waterMark(outputStream);
-
-        log.info("output fileName=/tmp/stamped.pdf");
-        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
-        wout.writeTo(fileOutputStream);
-        fileOutputStream.close();
-        inputStream.close();
-    }
-
     static void testInactiveStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
         log.info("input fileName={}", fileName);
         final String consentNumber="CF-ABCD5678";
         final String fromNumber="CF-ABCD1234";
         final InputStream inputStream = getInputStreamFromFile(fileName);
 
-        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
+        final PipelineService pipelineService=ctx.getBean(PipelineService.class);
 
-        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
-        final ByteArrayOutputStream outputStream = stampService.tableStamper(
-                "Inactive",
-                FstLine,
-                numberLine,
-                inputStream);
-        //
-        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
-        ByteArrayOutputStream wout = watermarkService.waterMark("Inactive", outputStream);
-
-        log.info("output fileName=/tmp/stamped.pdf");
-        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
-        wout.writeTo(fileOutputStream);
-        fileOutputStream.close();
-        inputStream.close();
-    }
-
-    static void testExpiredStamp(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
-        log.info("input fileName={}", fileName);
-        final String consentNumber="CF-ABCD5678";
-        final String fromNumber="CF-ABCD1234";
-        final InputStream inputStream = getInputStreamFromFile(fileName);
-
-        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
-        final ByteArrayOutputStream outputStream = stampService.tableStamper(
-                "Expired",
-                FstLine,
-                numberLine,
-                inputStream);
-        //
-        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
-        ByteArrayOutputStream wout = watermarkService.waterMark("Expired", outputStream);
+        ByteArrayOutputStream wout = pipelineService.inactiveNoApprovalStamp(
+                FstLine, consentNumber, fromNumber, inputStream);
 
         log.info("output fileName=/tmp/stamped.pdf");
         FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
@@ -218,15 +142,9 @@ public class Application {
         final String fromNumber="CF-ABCD1234";
         final InputStream inputStream = getInputStreamFromFile(fileName);
 
-        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
-        final ByteArrayOutputStream outputStream = stampService.supersededStamper(
-                FstLine,
-                numberLine,
-                inputStream);
-        //
-        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
-        ByteArrayOutputStream wout = watermarkService.waterMark("Superseded", outputStream);
+        final PipelineService pipelineService=ctx.getBean(PipelineService.class);
+        ByteArrayOutputStream wout = pipelineService.supersededNoApprovalStamp(
+                FstLine, consentNumber, fromNumber, inputStream);
 
         log.info("output fileName=/tmp/stamped.pdf");
         FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
@@ -244,16 +162,86 @@ public class Application {
         final Date expiryDate = DateTime.now().plusYears(1).toDate();
         final InputStream inputStream = getInputStreamFromFile(fileName);
 
-        final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
-        final ByteArrayOutputStream outputStream = stampService.approvalStamper(
-                FstLine,
-                numberLine,
-                approvalDate, expiryDate,
-                inputStream);
+        final PipelineService pipelineService=ctx.getBean(PipelineService.class);
+        final ByteArrayOutputStream outputStream = pipelineService.closedEnrollmentWithApprovalInfo(
+                FstLine, consentNumber, fromNumber, approvalDate, expiryDate, inputStream);
         //
-        final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
-        ByteArrayOutputStream wout = watermarkService.waterMarkOnStamper("Study Closed to Enrollment", outputStream);
+        log.info("output fileName=/tmp/stamped.pdf");
+        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
+        outputStream.writeTo(fileOutputStream);
+        fileOutputStream.close();
+        inputStream.close();
+    }
+
+    static void testExpiryPipeline(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("input fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+        final Date approvalDate = DateTime.now().toDate();
+        final Date expiryDate = DateTime.now().plusYears(1).toDate();
+
+        final PipelineService pipelineService=ctx.getBean(PipelineService.class);
+        final InputStream inputStream = getInputStreamFromFile(fileName);
+
+        final ByteArrayOutputStream outputStream = pipelineService.expiryPipeline(
+                FstLine, consentNumber, fromNumber, approvalDate, expiryDate, inputStream);
+
+        log.info("output fileName=/tmp/stamped.pdf");
+        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
+        outputStream.writeTo(fileOutputStream);
+        fileOutputStream.close();
+        inputStream.close();
+    }
+
+    static void testInactivePipeline(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("input fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+        final Date approvalDate = DateTime.now().toDate();
+        final Date expiryDate = DateTime.now().plusYears(1).toDate();
+
+        final PipelineService pipelineService=ctx.getBean(PipelineService.class);
+        final InputStream inputStream = getInputStreamFromFile(fileName);
+
+        final ByteArrayOutputStream outputStream = pipelineService.inactiveWithApprovalInfo(
+                FstLine, consentNumber, fromNumber, approvalDate, expiryDate, inputStream);
+
+        log.info("output fileName=/tmp/stamped.pdf");
+        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
+        outputStream.writeTo(fileOutputStream);
+        fileOutputStream.close();
+        inputStream.close();
+    }
+
+    static void testSupersededPipeline(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("input fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+        final Date approvalDate = DateTime.now().toDate();
+        final Date expiryDate = DateTime.now().plusYears(1).toDate();
+
+        final PipelineService pipelineService=ctx.getBean(PipelineService.class);
+        final InputStream inputStream = getInputStreamFromFile(fileName);
+
+        final ByteArrayOutputStream outputStream = pipelineService.supersededWithApprovalInfo(
+                FstLine, consentNumber, fromNumber, approvalDate, expiryDate, inputStream);
+
+        log.info("output fileName=/tmp/stamped.pdf");
+        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
+        outputStream.writeTo(fileOutputStream);
+        fileOutputStream.close();
+        inputStream.close();
+    }
+
+    static void testNgsPipeline(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("input fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+
+        final InputStream inputStream = getInputStreamFromFile(fileName);
+
+        final PipelineService pipelineService = ctx.getBean(PipelineService.class);
+        ByteArrayOutputStream wout = pipelineService.ngsRuleFailStamp(FstLine, consentNumber, fromNumber, inputStream);
 
         log.info("output fileName=/tmp/stamped.pdf");
         FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
