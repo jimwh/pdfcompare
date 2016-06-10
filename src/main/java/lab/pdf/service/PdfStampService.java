@@ -67,12 +67,12 @@ public class PdfStampService {
                     isPortraitMode);
             approvalDateStamp.stampText();
 
-            final ExpiryDateStamp expiredDateStamp = new ExpiryDateStamp(content,
+            final ExpiryDateStamp expiryDateStamp = new ExpiryDateStamp(content,
                     rectangle,
                     baseFont,
                     expiryDate,
                     isPortraitMode);
-            expiredDateStamp.stampText();
+            expiryDateStamp.stampText();
             content.restoreState();
         }
         pdfStamper.close();
@@ -187,7 +187,6 @@ public class PdfStampService {
         }
     }
 
-
     public ByteArrayOutputStream ngsRuleFailStamp(final InputStream inputStream) throws IOException, DocumentException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -198,7 +197,6 @@ public class PdfStampService {
         final int totalPages = pdfReader.getNumberOfPages();
         for (int i = 1; i <= totalPages; i++) {
             final Rectangle rectangle = pdfReader.getCropBox(i);
-            // Ensure all the images will have a height of one inch.
             image.scaleToFit(1000f, 35.5f);
             final int rotation = pdfReader.getPageRotation(i);
             final boolean isPortraitMode = rotation == 0 || rotation == 180;
