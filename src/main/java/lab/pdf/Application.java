@@ -34,6 +34,7 @@ import org.springframework.context.annotation.Configuration;
 @SpringApplicationConfiguration(classes = {DataSourceConfig.class})
 public class Application {
 
+    static final String FstLine = "Medical Center Institutional Review Board: 212-851-7040";
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
     public static void main(final String[] args) throws IOException, DocumentException {
@@ -67,8 +68,8 @@ public class Application {
         // testApprovalStamp(ctx, "./LegacyConsentForm.pdf");
         // testNgsRuleFailStamp(ctx, "./LegacyConsentForm.pdf");
         // testInactiveStamp(ctx, "./LegacyConsentForm.pdf");
-        // testExpiredStamp(ctx, "./LegacyConsentForm.pdf");
-        testSupersededStamp(ctx, "/home/jh3389/consent_form/600-2000.pdf");
+        testExpiredStamp(ctx, "./LegacyConsentForm.pdf");
+        // testSupersededStamp(ctx, "./LegacyConsentForm.pdf");
 
         //testEnrollmentClosedStamp(ctx, "/home/jh3389/consent_form/600-2000.pdf");
         SpringApplication.exit(ctx);
@@ -113,10 +114,10 @@ public class Application {
         final InputStream inputStream = getInputStreamFromFile(fileName);
 
         final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
+
+        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
         final ByteArrayOutputStream outputStream = stampService.approvalStamper(
-                line1,
-                consentNumber, fromNumber,
+                FstLine, numberLine,
                 approvalDate, expiryDate,
                 inputStream);
         //
@@ -143,14 +144,13 @@ public class Application {
         final String consentNumber="CF-ABCD5678";
         final String fromNumber="CF-ABCD1234";
 
-
         final InputStream inputStream = getInputStreamFromFile(fileName);
 
         final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
+        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
         final ByteArrayOutputStream outputStream = stampService.ngsRuleFailStamper(
-                line1,
-                consentNumber, fromNumber,
+                FstLine,
+                numberLine,
                 inputStream);
         //
         final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
@@ -170,10 +170,12 @@ public class Application {
         final InputStream inputStream = getInputStreamFromFile(fileName);
 
         final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
-        final ByteArrayOutputStream outputStream = stampService.inactiveStamper(
-                line1,
-                consentNumber, fromNumber,
+
+        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
+        final ByteArrayOutputStream outputStream = stampService.tableStamper(
+                "Inactive",
+                FstLine,
+                numberLine,
                 inputStream);
         //
         final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
@@ -193,10 +195,11 @@ public class Application {
         final InputStream inputStream = getInputStreamFromFile(fileName);
 
         final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
-        final ByteArrayOutputStream outputStream = stampService.expiredStamper(
-                line1,
-                consentNumber, fromNumber,
+        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
+        final ByteArrayOutputStream outputStream = stampService.tableStamper(
+                "Expired",
+                FstLine,
+                numberLine,
                 inputStream);
         //
         final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
@@ -216,10 +219,10 @@ public class Application {
         final InputStream inputStream = getInputStreamFromFile(fileName);
 
         final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
+        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
         final ByteArrayOutputStream outputStream = stampService.supersededStamper(
-                line1,
-                consentNumber, fromNumber,
+                FstLine,
+                numberLine,
                 inputStream);
         //
         final WatermarkService watermarkService=ctx.getBean(WatermarkService.class);
@@ -242,10 +245,10 @@ public class Application {
         final InputStream inputStream = getInputStreamFromFile(fileName);
 
         final PdfStampService stampService=ctx.getBean(PdfStampService.class);
-        final String line1 = "Medical Center Institutional Review Board: 212-851-7040";
+        final String numberLine = stampService.getNumberLine(consentNumber,fromNumber);
         final ByteArrayOutputStream outputStream = stampService.approvalStamper(
-                line1,
-                consentNumber, fromNumber,
+                FstLine,
+                numberLine,
                 approvalDate, expiryDate,
                 inputStream);
         //

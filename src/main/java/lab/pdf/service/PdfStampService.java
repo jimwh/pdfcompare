@@ -11,6 +11,7 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +34,7 @@ public class PdfStampService {
     private static final Logger log = LoggerFactory.getLogger(PdfStampService.class);
 
     public ByteArrayOutputStream approvalStamper(final String fstLine,
-                                                 final String consentNumber,
-                                                 final String fromNumber,
+                                                 final String numberLine,
                                                  final Date approvalDate,
                                                  final Date expiryDate,
                                                  final InputStream inputStream) throws IOException, DocumentException {
@@ -83,8 +83,8 @@ public class PdfStampService {
                     isPortraitMode);
             expiredDateStamp.stampText();
             content.restoreState();
-
-            updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
+            final String pageLine = String.format("Page %d of %d", i, totalPages);
+            updatePageFooterTable(fstLine, numberLine, pageLine, content);
         }
         pdfStamper.close();
         pdfReader.close();
@@ -98,10 +98,10 @@ public class PdfStampService {
     }
 
     private void updatePageFooterTable(final String fstLine,
-                                       final String consentNumber,
-                                       final String fromNumber,
-                                       final int x, final int y, final PdfContentByte contentByte) {
-        final PdfPTable pdfTable = footerService.getFooterTable(fstLine, consentNumber, fromNumber, x, y);
+                                       final String numberLine,
+                                       final String pageLine,
+                                       final PdfContentByte contentByte) {
+        final PdfPTable pdfTable = footerService.getFooterTable(fstLine, numberLine, pageLine);
         pdfTable.writeSelectedRows(0, -1, 24, 50, contentByte);
     }
 
@@ -208,8 +208,7 @@ public class PdfStampService {
 
 
     public ByteArrayOutputStream ngsRuleFailStamper(final String fstLine,
-                                                 final String consentNumber,
-                                                 final String fromNumber,
+                                                 final String numberLine,
                                                  final InputStream inputStream) throws IOException, DocumentException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -239,8 +238,8 @@ public class PdfStampService {
             content.addImage(image);
 
             content.restoreState();
-
-            updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
+            final String pageLine = getPageLine(i, totalPages);
+            updatePageFooterTable(fstLine, numberLine, pageLine, content);
         }
         pdfStamper.close();
         pdfReader.close();
@@ -249,8 +248,7 @@ public class PdfStampService {
 
 
     public ByteArrayOutputStream inactiveStamper(final String fstLine,
-                                                 final String consentNumber,
-                                                 final String fromNumber,
+                                                 final String numberLine,
                                                  final InputStream inputStream) throws IOException, DocumentException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -287,8 +285,8 @@ public class PdfStampService {
             inactiveStamp.stampText();
 
             content.restoreState();
-
-            updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
+            final String pageLine = getPageLine(i, totalPages);
+            updatePageFooterTable(fstLine, numberLine, pageLine, content);
         }
         pdfStamper.close();
         pdfReader.close();
@@ -319,8 +317,7 @@ public class PdfStampService {
     }
 
     public ByteArrayOutputStream expiredStamper(final String fstLine,
-                                                 final String consentNumber,
-                                                 final String fromNumber,
+                                                 final String numberLine,
                                                  final InputStream inputStream) throws IOException, DocumentException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -356,8 +353,8 @@ public class PdfStampService {
             expiredStamp.stampText();
 
             content.restoreState();
-
-            updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
+            final String pageLine = getPageLine(i, totalPages);
+            updatePageFooterTable(fstLine, numberLine, pageLine, content);
         }
         pdfStamper.close();
         pdfReader.close();
@@ -385,8 +382,7 @@ public class PdfStampService {
 
 
     public ByteArrayOutputStream supersededStamper(final String fstLine,
-                                                final String consentNumber,
-                                                final String fromNumber,
+                                                final String numberLine,
                                                 final InputStream inputStream) throws IOException, DocumentException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -394,26 +390,55 @@ public class PdfStampService {
         final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
 
         final int totalPages = pdfReader.getNumberOfPages();
-        for (int i = 1; i <= totalPages; i++) {
-            final Rectangle rectangle = pdfReader.getCropBox(i);
-            final int rotation = pdfReader.getPageRotation(i);
-            final boolean isPortraitMode = rotation == 0 || rotation == 180;
-
-            final PdfContentByte content = pdfStamper.getOverContent(i);
+        for (int page = 1; page <= totalPages; page++) {
+            final PdfContentByte content = pdfStamper.getOverContent(page);
             final PdfGState pdfGState = new PdfGState();
             pdfGState.setFillOpacity(0.5f);
             content.setGState(pdfGState);
             content.saveState();
-
             content.restoreState();
-
-            updatePageFooterTable(fstLine, consentNumber, fromNumber, i, totalPages, content);
+            final String pageLine = getPageLine(page, totalPages);
+            updatePageFooterTable(fstLine, numberLine, pageLine, content);
             updateLeftFooterTable("Superseded", content);
-
         }
         pdfStamper.close();
         pdfReader.close();
         return byteArrayOutputStream;
     }
 
+    public ByteArrayOutputStream tableStamper(final String stampText,
+                                              final String fstLine,
+                                              final String numberLine,
+                                              final InputStream inputStream) throws IOException, DocumentException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        final PdfReader pdfReader = new PdfReader(inputStream);
+        final PdfStamper pdfStamper = new PdfStamper(pdfReader, byteArrayOutputStream);
+
+        final int totalPages = pdfReader.getNumberOfPages();
+        for (int page = 1; page <= totalPages; page++) {
+            final PdfContentByte content = pdfStamper.getOverContent(page);
+            final PdfGState pdfGState = new PdfGState();
+            pdfGState.setFillOpacity(0.5f);
+            content.setGState(pdfGState);
+            content.saveState();
+            content.restoreState();
+            final String pageLine = getPageLine(page, totalPages);
+            updatePageFooterTable(fstLine, numberLine, pageLine, content);
+            updateLeftFooterTable(stampText, content);
+        }
+        pdfStamper.close();
+        pdfReader.close();
+        return byteArrayOutputStream;
+    }
+
+    public String getNumberLine(final String consentNum, final String fromNum) {
+        return StringUtils.isBlank(fromNum) ?
+                String.format("Consent Form #: %s", consentNum) :
+                String.format("Consent Form #: %s  Copied From #: %s", consentNum, fromNum);
+    }
+
+    private String getPageLine(final int page, final int totalPages) {
+      return String.format("Page %d of %d", page, totalPages);
+    }
 }
