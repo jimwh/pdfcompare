@@ -43,7 +43,7 @@ public class FooterService {
         table.setTotalWidth(110);
         table.setLockedWidth(true);
         table.setHorizontalAlignment(Element.ALIGN_CENTER);
-        final Font font = new Font(FontFamily.HELVETICA, 17, Font.BOLD,  BaseColor.GRAY.darker());
+        final Font font = new Font(FontFamily.HELVETICA, 16, Font.BOLD,  BaseColor.GRAY.darker());
         // final Font font = FontFactory.getFont(FontFamily.HELVETICA, 16, Font.BOLD);
         final Paragraph paragraph=new Paragraph(text, font);
         paragraph.setAlignment(Element.ALIGN_CENTER);
