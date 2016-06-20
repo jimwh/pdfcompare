@@ -35,6 +35,7 @@ public class Application {
 
     static final String FstLine = "Medical Center Institutional Review Board: 212-851-7040";
     private static final Logger log = LoggerFactory.getLogger(Application.class);
+    static final String FNAME="/home/jh3389/rascaldev/pdfcmp/pdfcompare/AAAA0300.pdf";
 
     public static void main(final String[] args) throws IOException, DocumentException {
         if( args.length < 2 ) {
@@ -45,36 +46,37 @@ public class Application {
 
         final ApplicationContext ctx = SpringApplication.run(Application.class, args);
 
-        // pdfInfo(ctx, args[0]);
+        //final boolean bool = bodyComapre.compareContent(args[1], args[2]);
+        //final boolean bool = bodyComapre.compareContent("./UnStamped.pdf", "./stamped.pdf");
+        //final boolean bool = bodyComapre.compareContent("./UnStamped.pdf", "./Unstamped1.pdf");
+        //final boolean bool = bodyComapre.compareContent("./UnStamped.pdf", "./Unstamped2.pdf");
+        //final boolean bool = bodyComapre.compareContent("./UnStamped.pdf", "./WithMetaInfo.pdf");
 
-        // testResourceLoader(ctx);
+        //final boolean bool = bodyComapre.compareContent("./WithMetaInfo.pdf", "./NoMetaInfo.pdf");
+        //final boolean bool = bodyComapre.compareContent("./NoMetaInfo.pdf", "./WithMetaInfo2.pdf");
 
-        /*
-        if( args.length == 3 ) {
-            AddPdfFooter addPdfFooter=ctx.getBean(AddPdfFooter.class);
-            addPdfFooter.addFooterInfo(args[2]);
-        } else {
-            FooBar fooBar = ctx.getBean(FooBar.class);
-            log.info("foobar.dir={}", fooBar.getDownloadDir());
-        }
-        */
-
+        // textComparison(ctx, "UnStamped.pdf", "WithMetaInfo.pdf");
+        // textComparison(ctx, "NoMetaInfo.pdf", "WithMetaInfo2.pdf");
+        // textComparison(ctx, "UnStamped.pdf", "Unstamped1.pdf");
         // bodyCompare(ctx, args);
 
+        // pdfInfo(ctx, args[0]);
         // testApprovalStamp(ctx, args[0]);
         // testApprovalStamp(ctx, "/tmp/foo.pdf");
         // testApprovalStamp(ctx, "./LegacyConsentForm.pdf");
+        // testApprovalStamp(ctx, "./LegacyConsentForm.pdf");
 
-        testExpiryPipeline(ctx, "./LegacyConsentForm.pdf");
-        testInactivePipeline(ctx, "./LegacyConsentForm.pdf");
-        testSupersededPipeline(ctx, "./LegacyConsentForm.pdf");
-        testNgsPipeline(ctx, "./LegacyConsentForm.pdf");
-        testInactiveStamp(ctx, "./LegacyConsentForm.pdf");
-        testSupersededStamp(ctx, "./LegacyConsentForm.pdf");
+        testApprovalPipeline(ctx, "./UnStamped.pdf");
+        // testExpiryPipeline(ctx, FNAME);
+
+        //testInactivePipeline(ctx, "./LegacyConsentForm.pdf");
+        //testSupersededPipeline(ctx, "./LegacyConsentForm.pdf");
+        //testNgsPipeline(ctx, "./LegacyConsentForm.pdf");
+        //testInactiveStamp(ctx, "./LegacyConsentForm.pdf");
+        //testSupersededStamp(ctx, "./LegacyConsentForm.pdf");
 
         // testNgsRuleFailStamp(ctx, "./LegacyConsentForm.pdf");
         // testExpiredStamp(ctx, "./LegacyConsentForm.pdf");
-
         // testEnrollmentClosedStamp(ctx, "./LegacyConsentForm.pdf");
 
         SpringApplication.exit(ctx);
@@ -83,8 +85,8 @@ public class Application {
 
     static void pdfInfo(final ApplicationContext ctx, final String fileName) throws IOException {
         final PdfInfo pdfInfo = ctx.getBean(PdfInfo.class);
-        pdfInfo.printPdfInfo(fileName);
-        log.info("isLegacy={}", pdfInfo.isLegacy(fileName));
+        pdfInfo.printPdfInfo("WithMetaInfo.pdf");
+        log.info("isLegacy={}", pdfInfo.isLegacy("WithMetaInfo.pdf"));
     }
 
     static void textComparison(final ApplicationContext ctx, final String f1, final String f2) throws IOException {
@@ -105,7 +107,17 @@ public class Application {
 
     static void bodyCompare(final ApplicationContext ctx, String[] args) throws IOException {
         final PdfBodyCompare bodyComapre=ctx.getBean(PdfBodyCompare.class);
-        final boolean bool = bodyComapre.compareContent(args[1], args[2]);
+        //final boolean bool = bodyComapre.compareContent(args[1], args[2]);
+        //final boolean bool = bodyComapre.compareContent("./UnStamped.pdf", "./stamped.pdf");
+        //final boolean bool = bodyComapre.compareContent("./UnStamped.pdf", "./Unstamped1.pdf");
+        //final boolean bool = bodyComapre.compareContent("./UnStamped.pdf", "./Unstamped2.pdf");
+        //final boolean bool = bodyComapre.compareContent("./UnStamped.pdf", "./WithMetaInfo.pdf");
+
+        //final boolean bool = bodyComapre.compareContent("./WithMetaInfo.pdf", "./NoMetaInfo.pdf");
+        //final boolean bool = bodyComapre.compareContent("./NoMetaInfo.pdf", "./WithMetaInfo2.pdf");
+
+        final boolean bool = bodyComapre.compareContent("./WithMetaInfo.pdf", "./WithMetaInfo2.pdf");
+
         log.info("Is the same body: {}", bool);
     }
 
@@ -173,6 +185,25 @@ public class Application {
         inputStream.close();
     }
 
+    static void testApprovalPipeline(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
+        log.info("input fileName={}", fileName);
+        final String consentNumber="CF-ABCD5678";
+        final String fromNumber="CF-ABCD1234";
+        final Date approvalDate = DateTime.now().toDate();
+        final Date expiryDate = DateTime.now().plusYears(1).toDate();
+
+        final PipelineService pipelineService=ctx.getBean(PipelineService.class);
+        final InputStream inputStream = getInputStreamFromFile(fileName);
+
+        final ByteArrayOutputStream outputStream = pipelineService.approvalPipeline(
+                FstLine, consentNumber, fromNumber, approvalDate, expiryDate, inputStream);
+
+        FileOutputStream fileOutputStream=getFileOutputStream("./ApprovalTest.pdf");
+        outputStream.writeTo(fileOutputStream);
+        fileOutputStream.close();
+        inputStream.close();
+    }
+
     static void testExpiryPipeline(final ApplicationContext ctx, final String fileName) throws IOException, DocumentException {
         log.info("input fileName={}", fileName);
         final String consentNumber="CF-ABCD5678";
@@ -186,8 +217,7 @@ public class Application {
         final ByteArrayOutputStream outputStream = pipelineService.expiryPipeline(
                 FstLine, consentNumber, fromNumber, approvalDate, expiryDate, inputStream);
 
-        log.info("output fileName=/tmp/stamped.pdf");
-        FileOutputStream fileOutputStream=getFileOutputStream("/tmp/stamped.pdf");
+        FileOutputStream fileOutputStream=getFileOutputStream("./expiry.pdf");
         outputStream.writeTo(fileOutputStream);
         fileOutputStream.close();
         inputStream.close();
